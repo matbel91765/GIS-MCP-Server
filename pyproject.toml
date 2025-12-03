@@ -56,10 +56,10 @@ dev = [
 gis-mcp-server = "gis_mcp.server:main"
 
 [project.urls]
-Homepage = "https://github.com/your-org/gis-mcp-server"
-Documentation = "https://github.com/your-org/gis-mcp-server#readme"
-Repository = "https://github.com/your-org/gis-mcp-server"
-Issues = "https://github.com/your-org/gis-mcp-server/issues"
+Homepage = "https://github.com/matbel91765/gis-mcp-server"
+Documentation = "https://github.com/matbel91765/gis-mcp-server#readme"
+Repository = "https://github.com/matbel91765/gis-mcp-server"
+Issues = "https://github.com/matbel91765/gis-mcp-server/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gis_mcp"]

@@ -1,5 +1,10 @@
 # GIS MCP Server
 
+[![PyPI version](https://badge.fury.io/py/gis-mcp-server.svg)](https://badge.fury.io/py/gis-mcp-server)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/matbel91765/gis-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/matbel91765/gis-mcp-server/actions/workflows/ci.yml)
+
 A Model Context Protocol (MCP) server providing geospatial tools for AI agents. Enables Claude, GPT, and other LLMs to perform geocoding, routing, spatial analysis, and file operations.
 
 ## Features
@@ -17,7 +22,7 @@ A Model Context Protocol (MCP) server providing geospatial tools for AI agents. 
 pip install gis-mcp-server
 
 # From source
-git clone https://github.com/your-org/gis-mcp-server.git
+git clone https://github.com/matbel91765/gis-mcp-server.git
 cd gis-mcp-server
 pip install -e .
 ```
