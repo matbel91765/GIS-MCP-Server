@@ -21,7 +21,7 @@ class TestNominatimConfig:
         """Test default configuration values."""
         config = NominatimConfig()
         assert config.base_url == "https://nominatim.openstreetmap.org"
-        assert config.user_agent == "gis-mcp-server/0.1.0"
+        assert config.user_agent == "gis-mcp-server/1.0.0"
         assert config.timeout == 10.0
         assert config.rate_limit_delay == 1.0
 
