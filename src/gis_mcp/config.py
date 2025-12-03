@@ -33,12 +33,31 @@ class ValhallaConfig:
 
 
 @dataclass
+class PeliasConfig:
+    """Configuration for Pelias geocoding service."""
+
+    base_url: str = ""  # Must be self-hosted or use a provider
+    api_key: str = ""  # Optional, depends on provider
+    timeout: float = 10.0
+
+
+@dataclass
+class OpenElevationConfig:
+    """Configuration for Open-Elevation API service."""
+
+    base_url: str = "https://api.open-elevation.com"
+    timeout: float = 30.0
+
+
+@dataclass
 class Config:
     """Main configuration for GIS MCP Server."""
 
     nominatim: NominatimConfig = field(default_factory=NominatimConfig)
     osrm: OSRMConfig = field(default_factory=OSRMConfig)
     valhalla: ValhallaConfig = field(default_factory=ValhallaConfig)
+    pelias: PeliasConfig = field(default_factory=PeliasConfig)
+    open_elevation: OpenElevationConfig = field(default_factory=OpenElevationConfig)
 
     # General settings
     default_crs: str = "EPSG:4326"  # WGS84
@@ -67,6 +86,16 @@ class Config:
             config.valhalla.base_url = url
         if api_key := os.getenv("VALHALLA_API_KEY"):
             config.valhalla.api_key = api_key
+
+        # Pelias overrides
+        if url := os.getenv("PELIAS_URL"):
+            config.pelias.base_url = url
+        if api_key := os.getenv("PELIAS_API_KEY"):
+            config.pelias.api_key = api_key
+
+        # Open-Elevation overrides
+        if url := os.getenv("OPEN_ELEVATION_URL"):
+            config.open_elevation.base_url = url
 
         # General overrides
         if crs := os.getenv("GIS_DEFAULT_CRS"):
