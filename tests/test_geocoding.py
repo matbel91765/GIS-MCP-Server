@@ -321,3 +321,157 @@ class TestBatchGeocode:
 
         assert result["success"] is False
         assert "list" in result["error"].lower()
+
+
+class TestPeliasGeocode:
+    """Tests for Pelias geocoding provider."""
+
+    @pytest.mark.asyncio
+    async def test_pelias_geocode_invalid_provider(self):
+        """Test geocoding with invalid provider name."""
+        result = await geocode_address("Paris", provider="invalid")
+
+        assert result["success"] is False
+        assert "invalid provider" in result["error"].lower()
+
+    @pytest.mark.asyncio
+    async def test_pelias_geocode_not_configured(self):
+        """Test Pelias geocoding when not configured (falls back to Nominatim)."""
+        mock_nominatim_response = [{
+            "lat": "48.8566",
+            "lon": "2.3522",
+            "display_name": "Paris, France",
+            "type": "city",
+            "class": "place",
+            "importance": 0.9,
+            "osm_type": "relation",
+            "osm_id": 7444,
+            "address": {"city": "Paris", "country": "France"}
+        }]
+
+        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+            mock.return_value = mock_nominatim_response
+
+            result = await geocode_address("Paris", provider="pelias")
+
+            assert result["success"] is True
+            assert result["metadata"]["source"] == "nominatim"  # Fell back to Nominatim
+
+    @pytest.mark.asyncio
+    async def test_pelias_geocode_success(self):
+        """Test successful Pelias geocoding (mocked)."""
+        mock_pelias_response = {
+            "geocoding": {"version": "0.2"},
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [2.3522, 48.8566]
+                },
+                "properties": {
+                    "gid": "whosonfirst:locality:101751119",
+                    "layer": "locality",
+                    "source": "whosonfirst",
+                    "name": "Paris",
+                    "label": "Paris, Île-de-France, France",
+                    "confidence": 0.9,
+                    "country": "France",
+                    "region": "Île-de-France",
+                    "locality": "Paris"
+                }
+            }]
+        }
+
+        with patch("gis_mcp.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
+            mock.return_value = mock_pelias_response
+
+            result = await geocode_address("Paris", provider="pelias")
+
+            assert result["success"] is True
+            assert result["data"]["lat"] == 48.8566
+            assert result["data"]["lon"] == 2.3522
+            assert "Paris" in result["data"]["display_name"]
+            assert result["metadata"]["source"] == "pelias"
+            assert result["metadata"]["confidence"] == 0.9
+
+    @pytest.mark.asyncio
+    async def test_pelias_geocode_no_results(self):
+        """Test Pelias geocoding with no results (mocked)."""
+        mock_pelias_response = {
+            "geocoding": {"version": "0.2"},
+            "type": "FeatureCollection",
+            "features": []
+        }
+
+        with patch("gis_mcp.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
+            mock.return_value = mock_pelias_response
+
+            result = await geocode_address("nonexistent123", provider="pelias")
+
+            assert result["success"] is False
+            assert "no results" in result["error"].lower()
+            assert result["metadata"]["source"] == "pelias"
+
+    @pytest.mark.asyncio
+    async def test_pelias_reverse_geocode_success(self):
+        """Test successful Pelias reverse geocoding (mocked)."""
+        mock_pelias_response = {
+            "geocoding": {"version": "0.2"},
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [2.2945, 48.8584]
+                },
+                "properties": {
+                    "gid": "openstreetmap:venue:way/5013364",
+                    "layer": "venue",
+                    "source": "openstreetmap",
+                    "name": "Eiffel Tower",
+                    "label": "Eiffel Tower, Paris, France",
+                    "street": "Avenue Gustave Eiffel",
+                    "locality": "Paris",
+                    "region": "Île-de-France",
+                    "postalcode": "75007",
+                    "country": "France"
+                }
+            }]
+        }
+
+        with patch("gis_mcp.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
+            mock.return_value = mock_pelias_response
+
+            result = await reverse_geocode_coords(48.8584, 2.2945, provider="pelias")
+
+            assert result["success"] is True
+            assert "Eiffel Tower" in result["data"]["display_name"]
+            assert result["data"]["structured"]["city"] == "Paris"
+            assert result["metadata"]["source"] == "pelias"
+
+    @pytest.mark.asyncio
+    async def test_pelias_reverse_geocode_no_results(self):
+        """Test Pelias reverse geocoding with no results (mocked)."""
+        mock_pelias_response = {
+            "geocoding": {"version": "0.2"},
+            "type": "FeatureCollection",
+            "features": []
+        }
+
+        with patch("gis_mcp.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
+            mock.return_value = mock_pelias_response
+
+            result = await reverse_geocode_coords(0, 0, provider="pelias")
+
+            assert result["success"] is False
+            assert "no address found" in result["error"].lower()
+            assert result["metadata"]["source"] == "pelias"
+
+    @pytest.mark.asyncio
+    async def test_pelias_reverse_geocode_invalid_provider(self):
+        """Test reverse geocoding with invalid provider name."""
+        result = await reverse_geocode_coords(48.8566, 2.3522, provider="invalid")
+
+        assert result["success"] is False
+        assert "invalid provider" in result["error"].lower()
