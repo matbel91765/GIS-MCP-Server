@@ -5,9 +5,10 @@ This document provides detailed documentation for all tools available in the GIS
 ## Table of Contents
 
 1. [Geocoding Tools](#geocoding-tools)
-2. [Geometry Tools](#geometry-tools)
-3. [Routing Tools](#routing-tools)
-4. [File Tools](#file-tools)
+2. [Elevation Tools](#elevation-tools)
+3. [Geometry Tools](#geometry-tools)
+4. [Routing Tools](#routing-tools)
+5. [File Tools](#file-tools)
 
 ---
 
@@ -19,9 +20,10 @@ Convert an address to geographic coordinates.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `address` | string | Yes | Address to geocode (e.g., "1600 Pennsylvania Avenue, Washington DC") |
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `address` | string | Yes | - | Address to geocode (e.g., "1600 Pennsylvania Avenue, Washington DC") |
+| `provider` | string | No | "nominatim" | Geocoding provider: "nominatim" or "pelias" |
 
 **Response:**
 
@@ -70,10 +72,11 @@ Convert coordinates to an address.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `lat` | float | Yes | Latitude (-90 to 90) |
-| `lon` | float | Yes | Longitude (-180 to 180) |
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `lat` | float | Yes | - | Latitude (-90 to 90) |
+| `lon` | float | Yes | - | Longitude (-180 to 180) |
+| `provider` | string | No | "nominatim" | Geocoding provider: "nominatim" or "pelias" |
 
 **Response:**
 
@@ -102,6 +105,140 @@ Convert coordinates to an address.
   "error": null
 }
 ```
+
+---
+
+### batch_geocode
+
+Geocode multiple addresses in a single request.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `addresses` | array | Yes | List of addresses to geocode (max 10) |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "results": [
+      {
+        "index": 0,
+        "address": "Paris, France",
+        "result": {
+          "success": true,
+          "data": {"lat": 48.8566, "lon": 2.3522, ...}
+        }
+      },
+      ...
+    ],
+    "summary": {
+      "total": 3,
+      "successful": 3,
+      "failed": 0
+    }
+  },
+  "metadata": {
+    "batch_size": 3,
+    "provider": "nominatim"
+  },
+  "error": null
+}
+```
+
+**Notes:**
+- Maximum 10 addresses per request (Nominatim rate limit)
+- Respects 1 request/second rate limit automatically
+- Returns partial results if some addresses fail
+- Overall success if at least one address succeeds
+
+---
+
+## Elevation Tools
+
+### get_elevation
+
+Get the elevation (altitude) for a single point.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `lat` | float | Yes | Latitude (-90 to 90) |
+| `lon` | float | Yes | Longitude (-180 to 180) |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "elevation_m": 35,
+    "location": {
+      "lat": 48.8566,
+      "lon": 2.3522
+    }
+  },
+  "metadata": {
+    "source": "open-elevation",
+    "dataset": "SRTM"
+  },
+  "error": null
+}
+```
+
+**Notes:**
+- Uses Open-Elevation API (SRTM data)
+- Elevation returned in meters above sea level
+- May return null for ocean areas
+
+---
+
+### get_elevation_profile
+
+Get elevations along a path (for profile charts).
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `coordinates` | array | Yes | List of [lon, lat] pairs (2-100 points) |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "profile": [
+      {"lat": 48.8566, "lon": 2.3522, "elevation_m": 35},
+      {"lat": 48.8584, "lon": 2.2945, "elevation_m": 42},
+      ...
+    ],
+    "stats": {
+      "min_elevation_m": 28,
+      "max_elevation_m": 56,
+      "elevation_gain_m": 28,
+      "elevation_loss_m": 14,
+      "average_elevation_m": 38.5
+    },
+    "point_count": 10
+  },
+  "metadata": {
+    "source": "open-elevation",
+    "dataset": "SRTM"
+  },
+  "error": null
+}
+```
+
+**Notes:**
+- Coordinates must be in [longitude, latitude] format (GeoJSON style)
+- Between 2 and 100 points allowed
+- Useful for generating elevation profile charts along routes
 
 ---
 

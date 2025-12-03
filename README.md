@@ -9,7 +9,9 @@ A Model Context Protocol (MCP) server providing geospatial tools for AI agents. 
 
 ## Features
 
-- **Geocoding**: Convert addresses to coordinates and vice versa (via Nominatim/OSM)
+- **Geocoding**: Convert addresses to coordinates and vice versa (via Nominatim/OSM or Pelias)
+- **Batch Geocoding**: Geocode multiple addresses in a single request (up to 10)
+- **Elevation Data**: Get altitude for points and elevation profiles along paths
 - **Routing**: Calculate routes between points with distance, duration, and geometry (via OSRM)
 - **Spatial Analysis**: Buffer, intersection, union, distance calculations
 - **File I/O**: Read/write Shapefiles, GeoJSON, GeoPackage
@@ -69,6 +71,32 @@ Convert coordinates to an address.
 ```
 Input: lat=48.8566, lon=2.3522
 Output: {display_name: "Paris, Île-de-France, France", ...}
+```
+
+#### `batch_geocode`
+Geocode multiple addresses at once (max 10).
+
+```
+Input: addresses=["Paris, France", "London, UK", "Berlin, Germany"]
+Output: {results: [...], summary: {total: 3, successful: 3, failed: 0}}
+```
+
+### Elevation
+
+#### `get_elevation`
+Get altitude for a point.
+
+```
+Input: lat=48.8566, lon=2.3522
+Output: {elevation_m: 35, location: {lat: 48.8566, lon: 2.3522}}
+```
+
+#### `get_elevation_profile`
+Get elevations along a path.
+
+```
+Input: coordinates=[[2.3522, 48.8566], [2.2945, 48.8584]]
+Output: {profile: [...], stats: {min: 28, max: 42, gain: 14}}
 ```
 
 ### Geometry
@@ -148,9 +176,12 @@ Environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `NOMINATIM_URL` | `https://nominatim.openstreetmap.org` | Nominatim API URL |
-| `NOMINATIM_USER_AGENT` | `gis-mcp-server/0.1.0` | User agent for Nominatim |
+| `NOMINATIM_USER_AGENT` | `gis-mcp-server/1.0.0` | User agent for Nominatim |
 | `OSRM_URL` | `https://router.project-osrm.org` | OSRM API URL |
 | `OSRM_PROFILE` | `driving` | Default routing profile |
+| `PELIAS_URL` | (empty) | Pelias geocoding API URL |
+| `PELIAS_API_KEY` | (empty) | Pelias API key (optional) |
+| `OPEN_ELEVATION_URL` | `https://api.open-elevation.com` | Open-Elevation API URL |
 | `GIS_DEFAULT_CRS` | `EPSG:4326` | Default CRS |
 | `GIS_TEMP_DIR` | `/tmp/gis-mcp` | Temporary directory |
 
@@ -202,7 +233,8 @@ src/gis_mcp/
 ├── config.py      # Configuration management
 ├── utils.py       # Common utilities
 └── tools/
-    ├── geocoding.py   # geocode, reverse_geocode
+    ├── geocoding.py   # geocode, reverse_geocode, batch_geocode
+    ├── elevation.py   # get_elevation, get_elevation_profile
     ├── routing.py     # route, isochrone
     ├── geometry.py    # buffer, distance, spatial_query, transform_crs
     └── files.py       # read_file, write_file
@@ -218,10 +250,10 @@ Contributions welcome! Please read the contributing guidelines before submitting
 
 ## Roadmap
 
-- [ ] Pelias geocoding support (higher accuracy)
+- [x] Pelias geocoding support (higher accuracy)
+- [x] Elevation/terrain data
+- [x] Batch geocoding
 - [ ] Valhalla routing integration (native isochrones)
 - [ ] PostGIS spatial queries
-- [ ] Elevation/terrain data
 - [ ] Real-time traffic data
-- [ ] Batch geocoding
 - [ ] ESRI FileGDB full support
