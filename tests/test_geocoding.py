@@ -4,10 +4,23 @@ Note: These tests require network access to Nominatim.
 For CI/CD, consider mocking the HTTP requests.
 """
 
-import pytest
 from unittest.mock import AsyncMock, patch
 
-from gis_mcp.tools.geocoding import geocode_address, reverse_geocode_coords, batch_geocode
+import pytest
+
+from gis_mcp.config import Config, PeliasConfig
+from gis_mcp.tools.geocoding import batch_geocode, geocode_address, reverse_geocode_coords
+
+
+def _create_pelias_config():
+    """Create a mock config with Pelias configured."""
+    config = Config()
+    config.pelias = PeliasConfig(
+        base_url="http://localhost:4000",
+        api_key="test-key",
+        timeout=10.0
+    )
+    return config
 
 
 class TestGeocode:
@@ -383,17 +396,19 @@ class TestPeliasGeocode:
             }]
         }
 
-        with patch("gis_mcp.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
-            mock.return_value = mock_pelias_response
+        with patch("gis_mcp.tools.geocoding.get_config") as mock_config:
+            mock_config.return_value = _create_pelias_config()
+            with patch("gis_mcp.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
+                mock.return_value = mock_pelias_response
 
-            result = await geocode_address("Paris", provider="pelias")
+                result = await geocode_address("Paris", provider="pelias")
 
-            assert result["success"] is True
-            assert result["data"]["lat"] == 48.8566
-            assert result["data"]["lon"] == 2.3522
-            assert "Paris" in result["data"]["display_name"]
-            assert result["metadata"]["source"] == "pelias"
-            assert result["metadata"]["confidence"] == 0.9
+                assert result["success"] is True
+                assert result["data"]["lat"] == 48.8566
+                assert result["data"]["lon"] == 2.3522
+                assert "Paris" in result["data"]["display_name"]
+                assert result["metadata"]["source"] == "pelias"
+                assert result["metadata"]["confidence"] == 0.9
 
     @pytest.mark.asyncio
     async def test_pelias_geocode_no_results(self):
@@ -404,14 +419,16 @@ class TestPeliasGeocode:
             "features": []
         }
 
-        with patch("gis_mcp.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
-            mock.return_value = mock_pelias_response
+        with patch("gis_mcp.tools.geocoding.get_config") as mock_config:
+            mock_config.return_value = _create_pelias_config()
+            with patch("gis_mcp.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
+                mock.return_value = mock_pelias_response
 
-            result = await geocode_address("nonexistent123", provider="pelias")
+                result = await geocode_address("nonexistent123", provider="pelias")
 
-            assert result["success"] is False
-            assert "no results" in result["error"].lower()
-            assert result["metadata"]["source"] == "pelias"
+                assert result["success"] is False
+                assert "no results" in result["error"].lower()
+                assert result["metadata"]["source"] == "pelias"
 
     @pytest.mark.asyncio
     async def test_pelias_reverse_geocode_success(self):
@@ -440,15 +457,17 @@ class TestPeliasGeocode:
             }]
         }
 
-        with patch("gis_mcp.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
-            mock.return_value = mock_pelias_response
+        with patch("gis_mcp.tools.geocoding.get_config") as mock_config:
+            mock_config.return_value = _create_pelias_config()
+            with patch("gis_mcp.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
+                mock.return_value = mock_pelias_response
 
-            result = await reverse_geocode_coords(48.8584, 2.2945, provider="pelias")
+                result = await reverse_geocode_coords(48.8584, 2.2945, provider="pelias")
 
-            assert result["success"] is True
-            assert "Eiffel Tower" in result["data"]["display_name"]
-            assert result["data"]["structured"]["city"] == "Paris"
-            assert result["metadata"]["source"] == "pelias"
+                assert result["success"] is True
+                assert "Eiffel Tower" in result["data"]["display_name"]
+                assert result["data"]["structured"]["city"] == "Paris"
+                assert result["metadata"]["source"] == "pelias"
 
     @pytest.mark.asyncio
     async def test_pelias_reverse_geocode_no_results(self):
@@ -459,14 +478,16 @@ class TestPeliasGeocode:
             "features": []
         }
 
-        with patch("gis_mcp.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
-            mock.return_value = mock_pelias_response
+        with patch("gis_mcp.tools.geocoding.get_config") as mock_config:
+            mock_config.return_value = _create_pelias_config()
+            with patch("gis_mcp.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
+                mock.return_value = mock_pelias_response
 
-            result = await reverse_geocode_coords(0, 0, provider="pelias")
+                result = await reverse_geocode_coords(0, 0, provider="pelias")
 
-            assert result["success"] is False
-            assert "no address found" in result["error"].lower()
-            assert result["metadata"]["source"] == "pelias"
+                assert result["success"] is False
+                assert "no address found" in result["error"].lower()
+                assert result["metadata"]["source"] == "pelias"
 
     @pytest.mark.asyncio
     async def test_pelias_reverse_geocode_invalid_provider(self):
