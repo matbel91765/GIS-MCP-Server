@@ -1,7 +1,6 @@
 """File I/O tools for GIS MCP Server."""
 
 import logging
-import os
 from pathlib import Path
 from typing import Any
 

@@ -7,6 +7,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from gis_mcp.config import get_config
+from gis_mcp.tools.files import read_geo_file, write_geo_file
 from gis_mcp.tools.geocoding import geocode_address, reverse_geocode_coords
 from gis_mcp.tools.geometry import (
     calculate_buffer,
@@ -14,8 +15,7 @@ from gis_mcp.tools.geometry import (
     perform_spatial_query,
     transform_coordinates,
 )
-from gis_mcp.tools.routing import calculate_route, calculate_isochrone
-from gis_mcp.tools.files import read_geo_file, write_geo_file
+from gis_mcp.tools.routing import calculate_isochrone, calculate_route
 
 # Configure logging
 logging.basicConfig(
@@ -34,7 +34,7 @@ mcp = FastMCP("GIS Server")
 
 @mcp.tool()
 async def geocode(
-    address: Annotated[str, Field(description="Address to geocode (e.g., '1600 Pennsylvania Avenue, Washington DC')")]
+    address: Annotated[str, Field(description="Address to geocode")]
 ) -> dict:
     """Convert an address to geographic coordinates (latitude/longitude).
 
@@ -69,7 +69,7 @@ async def distance(
     lon1: Annotated[float, Field(description="Longitude of first point")],
     lat2: Annotated[float, Field(description="Latitude of second point")],
     lon2: Annotated[float, Field(description="Longitude of second point")],
-    method: Annotated[str, Field(description="Calculation method: 'haversine' (faster) or 'geodesic' (more accurate)")] = "geodesic"
+    method: Annotated[str, Field(description="Method: 'haversine' or 'geodesic'")] = "geodesic"
 ) -> dict:
     """Calculate the distance between two geographic points.
 
@@ -84,9 +84,9 @@ async def distance(
 
 @mcp.tool()
 async def buffer(
-    geometry: Annotated[dict, Field(description="GeoJSON geometry (Point, LineString, or Polygon)")],
+    geometry: Annotated[dict, Field(description="GeoJSON geometry")],
     distance_meters: Annotated[float, Field(description="Buffer distance in meters")],
-    resolution: Annotated[int, Field(description="Number of segments for curved edges")] = 16
+    resolution: Annotated[int, Field(description="Segments for curved edges")] = 16
 ) -> dict:
     """Create a buffer zone around a geometry.
 
@@ -103,7 +103,7 @@ async def buffer(
 async def spatial_query(
     geometry1: Annotated[dict, Field(description="First GeoJSON geometry")],
     geometry2: Annotated[dict, Field(description="Second GeoJSON geometry")],
-    operation: Annotated[str, Field(description="Operation: 'intersection', 'union', 'difference', 'contains', 'within', 'intersects', 'overlaps'")]
+    operation: Annotated[str, Field(description="Spatial operation to perform")]
 ) -> dict:
     """Perform spatial operations between two geometries.
 
@@ -150,7 +150,7 @@ async def route(
     start_lon: Annotated[float, Field(description="Start point longitude")],
     end_lat: Annotated[float, Field(description="End point latitude")],
     end_lon: Annotated[float, Field(description="End point longitude")],
-    profile: Annotated[str, Field(description="Routing profile: 'driving', 'walking', or 'cycling'")] = "driving"
+    profile: Annotated[str, Field(description="Profile: driving/walking/cycling")] = "driving"
 ) -> dict:
     """Calculate a route between two points.
 
@@ -170,7 +170,7 @@ async def isochrone(
     lat: Annotated[float, Field(description="Center point latitude")],
     lon: Annotated[float, Field(description="Center point longitude")],
     time_minutes: Annotated[int, Field(description="Travel time in minutes")],
-    profile: Annotated[str, Field(description="Routing profile: 'driving', 'walking', or 'cycling'")] = "driving"
+    profile: Annotated[str, Field(description="Profile: driving/walking/cycling")] = "driving"
 ) -> dict:
     """Calculate an isochrone (area reachable within a time limit).
 
@@ -189,9 +189,9 @@ async def isochrone(
 
 @mcp.tool()
 async def read_file(
-    file_path: Annotated[str, Field(description="Path to geospatial file (Shapefile, GeoJSON, GeoPackage)")],
-    layer: Annotated[str | None, Field(description="Layer name for multi-layer files")] = None,
-    limit: Annotated[int | None, Field(description="Maximum number of features to return")] = None
+    file_path: Annotated[str, Field(description="Path to geospatial file")],
+    layer: Annotated[str | None, Field(description="Layer name")] = None,
+    limit: Annotated[int | None, Field(description="Max features to return")] = None
 ) -> dict:
     """Read a geospatial file and return its features.
 
@@ -208,9 +208,9 @@ async def read_file(
 
 @mcp.tool()
 async def write_file(
-    features: Annotated[dict, Field(description="GeoJSON FeatureCollection to write")],
+    features: Annotated[dict, Field(description="GeoJSON FeatureCollection")],
     file_path: Annotated[str, Field(description="Output file path")],
-    driver: Annotated[str, Field(description="Output format: 'GeoJSON', 'ESRI Shapefile', 'GPKG'")] = "GeoJSON"
+    driver: Annotated[str, Field(description="Format: GeoJSON/Shapefile/GPKG")] = "GeoJSON"
 ) -> dict:
     """Write features to a geospatial file.
 

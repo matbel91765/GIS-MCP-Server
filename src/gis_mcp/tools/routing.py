@@ -67,14 +67,13 @@ async def _osrm_request(
 
     url = f"{config.osrm.base_url}/{service}/v1/{profile}/{coords_str}"
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            url,
-            params=params,
-            timeout=aiohttp.ClientTimeout(total=config.osrm.timeout)
-        ) as response:
-            response.raise_for_status()
-            return await response.json()
+    async with aiohttp.ClientSession() as session, session.get(
+        url,
+        params=params,
+        timeout=aiohttp.ClientTimeout(total=config.osrm.timeout)
+    ) as response:
+        response.raise_for_status()
+        return await response.json()
 
 
 async def calculate_route(
@@ -230,7 +229,9 @@ async def calculate_isochrone(
         max_distance_km = speed_kmh.get(normalized_profile, 60) * (time_minutes / 60) * 1.5
 
         # Generate sample points in a grid around the center
-        sample_points = _generate_sample_points(lat, lon, max_distance_km, num_rings=8, points_per_ring=16)
+        sample_points = _generate_sample_points(
+            lat, lon, max_distance_km, num_rings=8, points_per_ring=16
+        )
 
         # Include center point
         coordinates = [(lon, lat)] + sample_points
@@ -367,13 +368,13 @@ def _destination_point(
     Returns:
         Tuple of (latitude, longitude).
     """
-    R = 6371  # Earth's radius in km
+    earth_radius_km = 6371  # Earth's radius in km
 
     lat_rad = math.radians(lat)
     lon_rad = math.radians(lon)
     bearing_rad = math.radians(bearing)
 
-    d = distance_km / R
+    d = distance_km / earth_radius_km
 
     dest_lat = math.asin(
         math.sin(lat_rad) * math.cos(d) +

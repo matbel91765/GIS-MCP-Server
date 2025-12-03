@@ -9,7 +9,7 @@ class NominatimConfig:
     """Configuration for Nominatim geocoding service."""
 
     base_url: str = "https://nominatim.openstreetmap.org"
-    user_agent: str = "gis-mcp-server/0.1.0"
+    user_agent: str = "gis-mcp-server/1.0.0"
     timeout: float = 10.0
     rate_limit_delay: float = 1.0  # Nominatim requires 1 req/sec max
 

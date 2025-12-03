@@ -4,7 +4,6 @@ import asyncio
 import logging
 import time
 from collections.abc import Callable
-from functools import wraps
 from typing import Any, TypeVar
 
 import aiohttp
@@ -108,7 +107,7 @@ async def retry_async(
     for attempt in range(max_retries + 1):
         try:
             return await func(*args, **kwargs)
-        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        except (TimeoutError, aiohttp.ClientError) as e:
             last_exception = e
             if attempt < max_retries:
                 logger.warning(

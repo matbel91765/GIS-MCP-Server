@@ -5,7 +5,6 @@ import math
 from typing import Any
 
 from pyproj import CRS, Transformer
-from shapely import wkt
 from shapely.geometry import mapping, shape
 from shapely.ops import transform
 
@@ -31,7 +30,7 @@ def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> f
     Returns:
         Distance in meters.
     """
-    R = 6371000  # Earth's radius in meters
+    earth_radius = 6371000  # Earth's radius in meters
 
     phi1 = math.radians(lat1)
     phi2 = math.radians(lat2)
@@ -42,7 +41,7 @@ def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> f
         math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-    return R * c
+    return earth_radius * c
 
 
 def _geodesic_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -219,8 +218,9 @@ async def perform_spatial_query(
 
     operation = operation.lower()
     if operation not in valid_operations:
+        valid_ops = ", ".join(sorted(valid_operations))
         return make_error_response(
-            f"Invalid operation '{operation}'. Valid operations: {', '.join(sorted(valid_operations))}"
+            f"Invalid operation '{operation}'. Valid operations: {valid_ops}"
         )
 
     try:

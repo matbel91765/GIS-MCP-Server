@@ -48,15 +48,14 @@ async def _nominatim_request(
         "Accept": "application/json",
     }
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            url,
-            params=params,
-            headers=headers,
-            timeout=aiohttp.ClientTimeout(total=config.nominatim.timeout)
-        ) as response:
-            response.raise_for_status()
-            return await response.json()
+    async with aiohttp.ClientSession() as session, session.get(
+        url,
+        params=params,
+        headers=headers,
+        timeout=aiohttp.ClientTimeout(total=config.nominatim.timeout)
+    ) as response:
+        response.raise_for_status()
+        return await response.json()
 
 
 async def geocode_address(address: str) -> dict[str, Any]:
