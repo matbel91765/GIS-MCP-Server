@@ -1,5 +1,6 @@
 """GIS MCP Tools - Geocoding, routing, geometry operations."""
 
+from gis_mcp.tools.elevation import get_elevation, get_elevation_profile
 from gis_mcp.tools.files import read_geo_file, write_geo_file
 from gis_mcp.tools.geocoding import geocode_address, reverse_geocode_coords
 from gis_mcp.tools.geometry import (
@@ -21,4 +22,6 @@ __all__ = [
     "calculate_isochrone",
     "read_geo_file",
     "write_geo_file",
+    "get_elevation",
+    "get_elevation_profile",
 ]
