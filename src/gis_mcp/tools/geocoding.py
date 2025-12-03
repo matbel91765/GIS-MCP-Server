@@ -58,7 +58,85 @@ async def _nominatim_request(
         return await response.json()
 
 
-async def geocode_address(address: str) -> dict[str, Any]:
+async def _pelias_geocode(address: str) -> dict[str, Any]:
+    """Internal helper to geocode an address using Pelias.
+
+    Args:
+        address: Address string to geocode.
+
+    Returns:
+        Pelias API response.
+
+    Raises:
+        aiohttp.ClientError: On network errors.
+        ValueError: On invalid configuration or response.
+    """
+    config = get_config()
+
+    if not config.pelias.base_url:
+        raise ValueError("Pelias base_url not configured")
+
+    url = f"{config.pelias.base_url}/v1/search"
+    params = {"text": address}
+
+    # Add API key if configured
+    if config.pelias.api_key:
+        params["api_key"] = config.pelias.api_key
+
+    headers = {"Accept": "application/json"}
+
+    async with aiohttp.ClientSession() as session, session.get(
+        url,
+        params=params,
+        headers=headers,
+        timeout=aiohttp.ClientTimeout(total=config.pelias.timeout)
+    ) as response:
+        response.raise_for_status()
+        return await response.json()
+
+
+async def _pelias_reverse(lat: float, lon: float) -> dict[str, Any]:
+    """Internal helper to reverse geocode coordinates using Pelias.
+
+    Args:
+        lat: Latitude.
+        lon: Longitude.
+
+    Returns:
+        Pelias API response.
+
+    Raises:
+        aiohttp.ClientError: On network errors.
+        ValueError: On invalid configuration or response.
+    """
+    config = get_config()
+
+    if not config.pelias.base_url:
+        raise ValueError("Pelias base_url not configured")
+
+    url = f"{config.pelias.base_url}/v1/reverse"
+    params = {
+        "point.lat": lat,
+        "point.lon": lon,
+    }
+
+    # Add API key if configured
+    if config.pelias.api_key:
+        params["api_key"] = config.pelias.api_key
+
+    headers = {"Accept": "application/json"}
+
+    async with aiohttp.ClientSession() as session, session.get(
+        url,
+        params=params,
+        headers=headers,
+        timeout=aiohttp.ClientTimeout(total=config.pelias.timeout)
+    ) as response:
+        response.raise_for_status()
+        return await response.json()
+
+
+async def geocode_address(address: str, provider: str = "nominatim") -> dict[str, Any]:
     """Geocode an address to coordinates.
 
     Args:
@@ -143,6 +221,84 @@ async def geocode_address(address: str) -> dict[str, Any]:
         return make_error_response(
             f"Geocoding failed: {str(e)}",
             metadata={"source": "nominatim"}
+        )
+
+
+async def batch_geocode(addresses: list[str]) -> dict[str, Any]:
+    """Batch geocode multiple addresses with rate limiting.
+
+    Args:
+        addresses: List of address strings to geocode (max 10).
+
+    Returns:
+        GIS response with results for all addresses.
+    """
+    # Validate input
+    if not addresses:
+        return make_error_response("Address list cannot be empty")
+
+    if not isinstance(addresses, list):
+        return make_error_response("Addresses must be provided as a list")
+
+    if len(addresses) > 10:
+        return make_error_response(
+            f"Too many addresses: {len(addresses)}. Maximum is 10 to respect rate limits."
+        )
+
+    results = []
+    success_count = 0
+    failure_count = 0
+
+    # Process each address with rate limiting
+    for idx, address in enumerate(addresses):
+        try:
+            result = await geocode_address(address)
+
+            # Track success/failure
+            if result["success"]:
+                success_count += 1
+            else:
+                failure_count += 1
+
+            # Add the result with the original address
+            results.append({
+                "index": idx,
+                "address": address,
+                "result": result
+            })
+
+        except Exception as e:
+            logger.exception(f"Unexpected error processing address '{address}': {e}")
+            failure_count += 1
+            results.append({
+                "index": idx,
+                "address": address,
+                "result": make_error_response(f"Processing failed: {str(e)}")
+            })
+
+    # Build response
+    data = {
+        "results": results,
+        "summary": {
+            "total": len(addresses),
+            "successful": success_count,
+            "failed": failure_count
+        }
+    }
+
+    metadata = {
+        "source": "nominatim",
+        "batch_size": len(addresses),
+        "rate_limited": True  # Indicates rate limiting was applied
+    }
+
+    # Overall success if at least one address succeeded
+    if success_count > 0:
+        return make_success_response(data, metadata)
+    else:
+        return make_error_response(
+            "All addresses failed to geocode",
+            metadata={**metadata, "results": results}
         )
 
 

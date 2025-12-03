@@ -7,7 +7,7 @@ For CI/CD, consider mocking the HTTP requests.
 import pytest
 from unittest.mock import AsyncMock, patch
 
-from gis_mcp.tools.geocoding import geocode_address, reverse_geocode_coords
+from gis_mcp.tools.geocoding import geocode_address, reverse_geocode_coords, batch_geocode
 
 
 class TestGeocode:
@@ -165,3 +165,159 @@ class TestValidation:
         """Test longitude at maximum boundary."""
         result = await reverse_geocode_coords(0, 180)
         assert "longitude" not in (result.get("error") or "").lower()
+
+
+class TestBatchGeocode:
+    """Tests for the batch_geocode function."""
+
+    @pytest.mark.asyncio
+    async def test_batch_geocode_empty_list(self):
+        """Test batch geocoding with empty list."""
+        result = await batch_geocode([])
+
+        assert result["success"] is False
+        assert "empty" in result["error"].lower()
+
+    @pytest.mark.asyncio
+    async def test_batch_geocode_too_many_addresses(self):
+        """Test batch geocoding with more than 10 addresses."""
+        addresses = [f"Address {i}" for i in range(11)]
+        result = await batch_geocode(addresses)
+
+        assert result["success"] is False
+        assert "too many" in result["error"].lower()
+        assert "10" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_batch_geocode_valid_addresses(self):
+        """Test batch geocoding with valid addresses (mocked)."""
+        addresses = ["Paris, France", "London, UK", "Berlin, Germany"]
+
+        mock_responses = [
+            [{
+                "lat": "48.8566",
+                "lon": "2.3522",
+                "display_name": "Paris, Île-de-France, France",
+                "type": "city",
+                "class": "place",
+                "importance": 0.9,
+                "osm_type": "relation",
+                "osm_id": 7444,
+                "boundingbox": ["48.815", "48.902", "2.224", "2.469"],
+                "address": {"city": "Paris", "country": "France"}
+            }],
+            [{
+                "lat": "51.5074",
+                "lon": "-0.1278",
+                "display_name": "London, England, UK",
+                "type": "city",
+                "class": "place",
+                "importance": 0.9,
+                "osm_type": "relation",
+                "osm_id": 65606,
+                "boundingbox": ["51.38", "51.69", "-0.35", "0.14"],
+                "address": {"city": "London", "country": "United Kingdom"}
+            }],
+            [{
+                "lat": "52.5200",
+                "lon": "13.4050",
+                "display_name": "Berlin, Germany",
+                "type": "city",
+                "class": "place",
+                "importance": 0.9,
+                "osm_type": "relation",
+                "osm_id": 62422,
+                "boundingbox": ["52.33", "52.68", "13.08", "13.76"],
+                "address": {"city": "Berlin", "country": "Germany"}
+            }]
+        ]
+
+        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+            mock.side_effect = mock_responses
+
+            result = await batch_geocode(addresses)
+
+            assert result["success"] is True
+            assert result["data"]["summary"]["total"] == 3
+            assert result["data"]["summary"]["successful"] == 3
+            assert result["data"]["summary"]["failed"] == 0
+            assert len(result["data"]["results"]) == 3
+
+            # Check first result
+            first_result = result["data"]["results"][0]
+            assert first_result["index"] == 0
+            assert first_result["address"] == "Paris, France"
+            assert first_result["result"]["success"] is True
+            assert first_result["result"]["data"]["lat"] == 48.8566
+
+    @pytest.mark.asyncio
+    async def test_batch_geocode_partial_failures(self):
+        """Test batch geocoding with some addresses failing (mocked)."""
+        addresses = ["Paris, France", "InvalidAddress123XYZ", "Berlin, Germany"]
+
+        mock_responses = [
+            [{
+                "lat": "48.8566",
+                "lon": "2.3522",
+                "display_name": "Paris, Île-de-France, France",
+                "type": "city",
+                "class": "place",
+                "importance": 0.9,
+                "osm_type": "relation",
+                "osm_id": 7444,
+                "boundingbox": ["48.815", "48.902", "2.224", "2.469"],
+                "address": {"city": "Paris", "country": "France"}
+            }],
+            [],  # No results for invalid address
+            [{
+                "lat": "52.5200",
+                "lon": "13.4050",
+                "display_name": "Berlin, Germany",
+                "type": "city",
+                "class": "place",
+                "importance": 0.9,
+                "osm_type": "relation",
+                "osm_id": 62422,
+                "boundingbox": ["52.33", "52.68", "13.08", "13.76"],
+                "address": {"city": "Berlin", "country": "Germany"}
+            }]
+        ]
+
+        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+            mock.side_effect = mock_responses
+
+            result = await batch_geocode(addresses)
+
+            assert result["success"] is True  # Overall success if at least one succeeded
+            assert result["data"]["summary"]["total"] == 3
+            assert result["data"]["summary"]["successful"] == 2
+            assert result["data"]["summary"]["failed"] == 1
+
+            # Check that the failed address has an error
+            second_result = result["data"]["results"][1]
+            assert second_result["index"] == 1
+            assert second_result["address"] == "InvalidAddress123XYZ"
+            assert second_result["result"]["success"] is False
+            assert "no results" in second_result["result"]["error"].lower()
+
+    @pytest.mark.asyncio
+    async def test_batch_geocode_all_failures(self):
+        """Test batch geocoding when all addresses fail (mocked)."""
+        addresses = ["Invalid1", "Invalid2"]
+
+        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+            mock.return_value = []  # No results for any address
+
+            result = await batch_geocode(addresses)
+
+            assert result["success"] is False
+            assert "all addresses failed" in result["error"].lower()
+            assert result["metadata"]["batch_size"] == 2
+
+    @pytest.mark.asyncio
+    async def test_batch_geocode_not_a_list(self):
+        """Test batch geocoding with invalid input type."""
+        result = await batch_geocode("not a list")  # type: ignore
+
+        assert result["success"] is False
+        assert "list" in result["error"].lower()
