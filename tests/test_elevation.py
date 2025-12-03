@@ -138,7 +138,7 @@ class TestGetElevationProfile:
     @pytest.mark.asyncio
     async def test_elevation_profile_invalid_coordinate_format(self):
         """Test elevation profile with invalid coordinate format."""
-        result = await get_elevation_profile([[2.3522, 48.8566, 100]])
+        result = await get_elevation_profile([[2.3522, 48.8566, 100], [2.4, 48.9]])
 
         assert result["success"] is False
         assert "must be [lon, lat]" in result["error"].lower()
