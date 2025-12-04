@@ -1,7 +1,7 @@
 """GIS MCP Server - Main entry point."""
 
 import logging
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastmcp import FastMCP
 from pydantic import Field
@@ -11,50 +11,100 @@ from gis_mcp.config import get_config
 # Import all tool implementations
 from gis_mcp.tools.elevation import get_elevation, get_elevation_profile
 from gis_mcp.tools.files import (
-    read_geo_file,
-    write_geo_file,
-    spatial_join as _spatial_join,
     clip_features as _clip_features,
+)
+from gis_mcp.tools.files import (
     dissolve_features as _dissolve_features,
-    overlay_features as _overlay_features,
+)
+from gis_mcp.tools.files import (
     merge_features as _merge_features,
 )
+from gis_mcp.tools.files import (
+    overlay_features as _overlay_features,
+)
+from gis_mcp.tools.files import (
+    read_geo_file,
+    write_geo_file,
+)
+from gis_mcp.tools.files import (
+    spatial_join as _spatial_join,
+)
 from gis_mcp.tools.geocoding import geocode_address, reverse_geocode_coords
+from gis_mcp.tools.geometry import (
+    calculate_area as _calculate_area,
+)
 from gis_mcp.tools.geometry import (
     calculate_buffer,
     calculate_distance,
     perform_spatial_query,
     transform_coordinates,
-    get_centroid as _get_centroid,
-    simplify_geometry as _simplify_geometry,
-    get_convex_hull as _get_convex_hull,
-    get_envelope as _get_envelope,
-    validate_geometry as _validate_geometry,
-    calculate_area as _calculate_area,
+)
+from gis_mcp.tools.geometry import (
     calculate_length as _calculate_length,
-    get_utm_zone as _get_utm_zone,
+)
+from gis_mcp.tools.geometry import (
+    get_centroid as _get_centroid,
+)
+from gis_mcp.tools.geometry import (
+    get_convex_hull as _get_convex_hull,
+)
+from gis_mcp.tools.geometry import (
     get_crs_info as _get_crs_info,
 )
-from gis_mcp.tools.routing import calculate_isochrone, calculate_route
+from gis_mcp.tools.geometry import (
+    get_envelope as _get_envelope,
+)
+from gis_mcp.tools.geometry import (
+    get_utm_zone as _get_utm_zone,
+)
+from gis_mcp.tools.geometry import (
+    simplify_geometry as _simplify_geometry,
+)
+from gis_mcp.tools.geometry import (
+    validate_geometry as _validate_geometry,
+)
 from gis_mcp.tools.raster import (
-    read_raster as _read_raster,
-    calculate_ndvi as _calculate_ndvi,
     calculate_hillshade as _calculate_hillshade,
+)
+from gis_mcp.tools.raster import (
+    calculate_ndvi as _calculate_ndvi,
+)
+from gis_mcp.tools.raster import (
     calculate_slope as _calculate_slope,
-    zonal_statistics as _zonal_statistics,
-    reproject_raster as _reproject_raster,
+)
+from gis_mcp.tools.raster import (
     raster_calculator as _raster_calculator,
 )
-from gis_mcp.tools.visualization import (
-    create_static_map as _create_static_map,
-    create_web_map as _create_web_map,
-    create_choropleth_map as _create_choropleth_map,
+from gis_mcp.tools.raster import (
+    read_raster as _read_raster,
+)
+from gis_mcp.tools.raster import (
+    reproject_raster as _reproject_raster,
+)
+from gis_mcp.tools.raster import (
+    zonal_statistics as _zonal_statistics,
+)
+from gis_mcp.tools.routing import calculate_isochrone, calculate_route
+from gis_mcp.tools.statistics import (
+    calculate_getis_ord as _calculate_getis_ord,
+)
+from gis_mcp.tools.statistics import (
+    calculate_local_moran as _calculate_local_moran,
 )
 from gis_mcp.tools.statistics import (
     calculate_moran_i as _calculate_moran_i,
-    calculate_local_moran as _calculate_local_moran,
-    calculate_getis_ord as _calculate_getis_ord,
+)
+from gis_mcp.tools.statistics import (
     create_spatial_weights as _create_spatial_weights,
+)
+from gis_mcp.tools.visualization import (
+    create_choropleth_map as _create_choropleth_map,
+)
+from gis_mcp.tools.visualization import (
+    create_static_map as _create_static_map,
+)
+from gis_mcp.tools.visualization import (
+    create_web_map as _create_web_map,
 )
 
 # Configure logging
@@ -119,7 +169,7 @@ async def buffer(
 async def spatial_query(
     geometry1: Annotated[dict, Field(description="First GeoJSON geometry")],
     geometry2: Annotated[dict, Field(description="Second GeoJSON geometry")],
-    operation: Annotated[str, Field(description="Operation: intersection/union/difference/contains/within/intersects")]
+    operation: Annotated[str, Field(description="Spatial operation to perform")]
 ) -> dict:
     """Perform spatial operations between two geometries."""
     return await perform_spatial_query(geometry1, geometry2, operation)
@@ -300,7 +350,7 @@ async def spatial_join(
     left_features: Annotated[dict, Field(description="Left GeoJSON FeatureCollection")],
     right_features: Annotated[dict, Field(description="Right GeoJSON FeatureCollection")],
     how: Annotated[str, Field(description="Join type: inner/left/right")] = "inner",
-    predicate: Annotated[str, Field(description="Spatial predicate: intersects/contains/within")] = "intersects"
+    predicate: Annotated[str, Field(description="Spatial predicate")] = "intersects"
 ) -> dict:
     """Perform a spatial join between two feature collections."""
     return await _spatial_join(left_features, right_features, how, predicate)
@@ -329,7 +379,7 @@ async def dissolve(
 async def overlay(
     features1: Annotated[dict, Field(description="First GeoJSON FeatureCollection")],
     features2: Annotated[dict, Field(description="Second GeoJSON FeatureCollection")],
-    how: Annotated[str, Field(description="Operation: intersection/union/difference")] = "intersection"
+    how: Annotated[str, Field(description="Overlay operation")] = "intersection"
 ) -> dict:
     """Perform overlay operation between two feature collections."""
     return await _overlay_features(features1, features2, how)
@@ -337,7 +387,7 @@ async def overlay(
 
 @mcp.tool()
 async def merge(
-    feature_collections: Annotated[list[dict], Field(description="List of GeoJSON FeatureCollections")]
+    feature_collections: Annotated[list[dict], Field(description="GeoJSON FeatureCollections")]
 ) -> dict:
     """Merge multiple feature collections into one."""
     return await _merge_features(feature_collections)

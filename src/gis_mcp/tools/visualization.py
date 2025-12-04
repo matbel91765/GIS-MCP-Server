@@ -3,7 +3,6 @@
 import base64
 import io
 import logging
-import os
 import tempfile
 from typing import Any
 
@@ -245,10 +244,7 @@ async def create_web_map(
         if gdf.empty:
             return make_error_response("No valid features to plot")
 
-        if gdf.crs is None:
-            gdf = gdf.set_crs("EPSG:4326")
-        else:
-            gdf = gdf.to_crs("EPSG:4326")
+        gdf = gdf.set_crs("EPSG:4326") if gdf.crs is None else gdf.to_crs("EPSG:4326")
 
     except Exception as e:
         return make_error_response(f"Failed to parse features: {str(e)}")
@@ -404,8 +400,8 @@ async def create_choropleth_map(
         )
 
     try:
-        import geopandas as gpd
         import branca.colormap as cm
+        import geopandas as gpd
     except ImportError:
         return make_error_response(
             "GeoPandas and branca required for choropleth maps"
@@ -422,10 +418,7 @@ async def create_choropleth_map(
                 f"Field '{value_field}' not found. Available: {list(gdf.columns)}"
             )
 
-        if gdf.crs is None:
-            gdf = gdf.set_crs("EPSG:4326")
-        else:
-            gdf = gdf.to_crs("EPSG:4326")
+        gdf = gdf.set_crs("EPSG:4326") if gdf.crs is None else gdf.to_crs("EPSG:4326")
 
         # Get value range
         values = gdf[value_field].dropna()

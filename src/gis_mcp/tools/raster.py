@@ -2,7 +2,6 @@
 
 import logging
 import os
-import tempfile
 from typing import Any
 
 import numpy as np
@@ -103,10 +102,7 @@ async def read_raster(
 def _compute_band_stats(data: np.ndarray, nodata: float | None, band_num: int) -> dict:
     """Compute statistics for a raster band."""
     # Mask nodata values
-    if nodata is not None:
-        valid_data = data[data != nodata]
-    else:
-        valid_data = data.flatten()
+    valid_data = data[data != nodata] if nodata is not None else data.flatten()
 
     if len(valid_data) == 0:
         return {"band": band_num, "all_nodata": True}
@@ -153,69 +149,70 @@ async def calculate_ndvi(
             return make_error_response(f"File not found: {path}")
 
     try:
-        with rasterio.open(red_band_path) as red_src:
-            with rasterio.open(nir_band_path) as nir_src:
-                # Check compatibility
-                if red_src.shape != nir_src.shape:
-                    return make_error_response(
-                        "Red and NIR bands must have the same dimensions"
-                    )
-
-                red = red_src.read(red_band).astype(np.float32)
-                nir = nir_src.read(nir_band).astype(np.float32)
-
-                # Avoid division by zero
-                denominator = nir + red
-                ndvi = np.where(
-                    denominator != 0,
-                    (nir - red) / denominator,
-                    0
+        with rasterio.open(red_band_path) as red_src, \
+             rasterio.open(nir_band_path) as nir_src:
+            # Check compatibility
+            if red_src.shape != nir_src.shape:
+                return make_error_response(
+                    "Red and NIR bands must have the same dimensions"
                 )
 
-                # Clip to valid range
-                ndvi = np.clip(ndvi, -1, 1)
+            red = red_src.read(red_band).astype(np.float32)
+            nir = nir_src.read(nir_band).astype(np.float32)
 
-                # Compute statistics
-                valid_ndvi = ndvi[~np.isnan(ndvi)]
-                stats = {
-                    "min": float(np.min(valid_ndvi)),
-                    "max": float(np.max(valid_ndvi)),
-                    "mean": float(np.mean(valid_ndvi)),
-                    "std": float(np.std(valid_ndvi)),
-                }
+            # Avoid division by zero
+            denominator = nir + red
+            ndvi = np.where(
+                denominator != 0,
+                (nir - red) / denominator,
+                0
+            )
 
-                # Vegetation classification
-                vegetation_classes = {
-                    "water_or_bare": float(np.sum(ndvi < 0) / ndvi.size * 100),
-                    "sparse_vegetation": float(np.sum((ndvi >= 0) & (ndvi < 0.2)) / ndvi.size * 100),
-                    "moderate_vegetation": float(np.sum((ndvi >= 0.2) & (ndvi < 0.4)) / ndvi.size * 100),
-                    "dense_vegetation": float(np.sum(ndvi >= 0.4) / ndvi.size * 100),
-                }
+            # Clip to valid range
+            ndvi = np.clip(ndvi, -1, 1)
 
-                # Optionally save output
-                output_file = None
-                if output_path:
-                    profile = red_src.profile.copy()
-                    profile.update(dtype=rasterio.float32, count=1, nodata=-9999)
+            # Compute statistics
+            valid_ndvi = ndvi[~np.isnan(ndvi)]
+            stats = {
+                "min": float(np.min(valid_ndvi)),
+                "max": float(np.max(valid_ndvi)),
+                "mean": float(np.mean(valid_ndvi)),
+                "std": float(np.std(valid_ndvi)),
+            }
 
-                    with rasterio.open(output_path, 'w', **profile) as dst:
-                        dst.write(ndvi, 1)
+            # Vegetation classification
+            size = ndvi.size
+            vegetation_classes = {
+                "water_or_bare": float(np.sum(ndvi < 0) / size * 100),
+                "sparse_vegetation": float(np.sum((ndvi >= 0) & (ndvi < 0.2)) / size * 100),
+                "moderate_vegetation": float(np.sum((ndvi >= 0.2) & (ndvi < 0.4)) / size * 100),
+                "dense_vegetation": float(np.sum(ndvi >= 0.4) / size * 100),
+            }
 
-                    output_file = output_path
+            # Optionally save output
+            output_file = None
+            if output_path:
+                profile = red_src.profile.copy()
+                profile.update(dtype=rasterio.float32, count=1, nodata=-9999)
 
-                data = {
-                    "statistics": stats,
-                    "vegetation_classes_percent": vegetation_classes,
-                    "shape": list(ndvi.shape),
-                }
+                with rasterio.open(output_path, 'w', **profile) as dst:
+                    dst.write(ndvi, 1)
 
-                if output_file:
-                    data["output_file"] = output_file
+                output_file = output_path
 
-                return make_success_response(data, {
-                    "red_band": red_band_path,
-                    "nir_band": nir_band_path,
-                })
+            data = {
+                "statistics": stats,
+                "vegetation_classes_percent": vegetation_classes,
+                "shape": list(ndvi.shape),
+            }
+
+            if output_file:
+                data["output_file"] = output_file
+
+            return make_success_response(data, {
+                "red_band": red_band_path,
+                "nir_band": nir_band_path,
+            })
 
     except Exception as e:
         logger.exception(f"Error calculating NDVI: {e}")
@@ -350,11 +347,7 @@ async def calculate_slope(
 
             # Calculate slope
             slope_rad = np.arctan(np.sqrt(dx**2 + dy**2))
-
-            if units == "degrees":
-                slope = np.degrees(slope_rad)
-            else:  # percent
-                slope = np.tan(slope_rad) * 100
+            slope = np.degrees(slope_rad) if units == "degrees" else np.tan(slope_rad) * 100
 
             # Statistics
             valid_slope = slope[~np.isnan(slope)]
@@ -367,12 +360,13 @@ async def calculate_slope(
 
             # Slope classification (degrees)
             if units == "degrees":
+                sz = slope.size
                 slope_classes = {
-                    "flat (0-5°)": float(np.sum(slope < 5) / slope.size * 100),
-                    "gentle (5-15°)": float(np.sum((slope >= 5) & (slope < 15)) / slope.size * 100),
-                    "moderate (15-30°)": float(np.sum((slope >= 15) & (slope < 30)) / slope.size * 100),
-                    "steep (30-45°)": float(np.sum((slope >= 30) & (slope < 45)) / slope.size * 100),
-                    "very steep (>45°)": float(np.sum(slope >= 45) / slope.size * 100),
+                    "flat (0-5°)": float(np.sum(slope < 5) / sz * 100),
+                    "gentle (5-15°)": float(np.sum((slope >= 5) & (slope < 15)) / sz * 100),
+                    "moderate (15-30°)": float(np.sum((slope >= 15) & (slope < 30)) / sz * 100),
+                    "steep (30-45°)": float(np.sum((slope >= 30) & (slope < 45)) / sz * 100),
+                    "very steep (>45°)": float(np.sum(slope >= 45) / sz * 100),
                 }
             else:
                 slope_classes = None
@@ -604,8 +598,8 @@ async def raster_calculator(
     """Perform raster algebra using a mathematical expression.
 
     Args:
-        expression: Math expression using variable names (e.g., "A + B", "(A - B) / (A + B)").
-        rasters: Dict mapping variable names to raster file paths (e.g., {"A": "red.tif", "B": "nir.tif"}).
+        expression: Math expression using variable names (e.g., "A + B").
+        rasters: Dict mapping variable names to raster file paths.
         output_path: Output file path.
         band: Band number to use from each raster.
 

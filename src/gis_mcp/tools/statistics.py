@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 # Check if PySAL is available
 try:
-    import libpysal
     import esda
+    import libpysal  # noqa: F401
     import numpy as np
     PYSAL_AVAILABLE = True
 except ImportError:
@@ -59,7 +59,7 @@ async def calculate_moran_i(
 
     try:
         import geopandas as gpd
-        from libpysal.weights import Queen, Rook, KNN
+        from libpysal.weights import KNN, Queen, Rook
     except ImportError:
         return make_error_response("GeoPandas required for spatial statistics")
 
@@ -91,7 +91,7 @@ async def calculate_moran_i(
             w = KNN.from_dataframe(gdf, k=5)
         else:
             return make_error_response(
-                f"Invalid weight_type. Use 'queen', 'rook', or 'knn'"
+                "Invalid weight_type. Use 'queen', 'rook', or 'knn'"
             )
 
         # Calculate Moran's I
@@ -159,7 +159,7 @@ async def calculate_local_moran(
 
     try:
         import geopandas as gpd
-        from libpysal.weights import Queen, Rook, KNN
+        from libpysal.weights import KNN, Queen, Rook
     except ImportError:
         return make_error_response("GeoPandas required")
 
@@ -198,7 +198,8 @@ async def calculate_local_moran(
         local_results = []
         for i in range(len(gdf)):
             significant = lisa.p_sim[i] < 0.05
-            cluster_type = quadrant_labels.get(lisa.q[i], "Not significant") if significant else "Not significant"
+            quad_label = quadrant_labels.get(lisa.q[i], "Not significant")
+            cluster_type = quad_label if significant else "Not significant"
 
             local_results.append({
                 "feature_index": i,
@@ -210,13 +211,16 @@ async def calculate_local_moran(
                 "significant": significant,
             })
 
-        # Summary
+        # Summary - count each cluster type
+        def count_type(t: str) -> int:
+            return sum(1 for r in local_results if r["cluster_type"] == t)
+
         cluster_counts = {
-            "High-High (hot spots)": sum(1 for r in local_results if r["cluster_type"] == "High-High"),
-            "Low-Low (cold spots)": sum(1 for r in local_results if r["cluster_type"] == "Low-Low"),
-            "High-Low (outliers)": sum(1 for r in local_results if r["cluster_type"] == "High-Low"),
-            "Low-High (outliers)": sum(1 for r in local_results if r["cluster_type"] == "Low-High"),
-            "Not significant": sum(1 for r in local_results if r["cluster_type"] == "Not significant"),
+            "High-High (hot spots)": count_type("High-High"),
+            "Low-Low (cold spots)": count_type("Low-Low"),
+            "High-Low (outliers)": count_type("High-Low"),
+            "Low-High (outliers)": count_type("Low-High"),
+            "Not significant": count_type("Not significant"),
         }
 
         data = {
@@ -268,7 +272,7 @@ async def calculate_getis_ord(
 
     try:
         import geopandas as gpd
-        from libpysal.weights import Queen, DistanceBand
+        from libpysal.weights import DistanceBand, Queen
     except ImportError:
         return make_error_response("GeoPandas required")
 
@@ -327,10 +331,7 @@ async def calculate_getis_ord(
                 confidence = "Not significant"
 
             if confidence != "Not significant":
-                if z > 0:
-                    spot_type = "Hot spot"
-                else:
-                    spot_type = "Cold spot"
+                spot_type = "Hot spot" if z > 0 else "Cold spot"
             else:
                 spot_type = "Not significant"
 
@@ -396,7 +397,7 @@ async def create_spatial_weights(
 
     try:
         import geopandas as gpd
-        from libpysal.weights import Queen, Rook, KNN, DistanceBand
+        from libpysal.weights import KNN, DistanceBand, Queen, Rook
     except ImportError:
         return make_error_response("GeoPandas required")
 
