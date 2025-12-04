@@ -212,3 +212,331 @@ async def write_geo_file(
     except Exception as e:
         logger.exception(f"Error writing file: {e}")
         return make_error_response(f"Failed to write file: {str(e)}")
+
+
+# =============================================================================
+# GEOPANDAS OPERATIONS
+# =============================================================================
+
+async def spatial_join(
+    left_features: dict[str, Any],
+    right_features: dict[str, Any],
+    how: str = "inner",
+    predicate: str = "intersects"
+) -> dict[str, Any]:
+    """Perform a spatial join between two feature collections.
+
+    Args:
+        left_features: Left GeoJSON FeatureCollection.
+        right_features: Right GeoJSON FeatureCollection.
+        how: Join type ('inner', 'left', 'right').
+        predicate: Spatial predicate ('intersects', 'contains', 'within').
+
+    Returns:
+        GIS response with joined features.
+    """
+    valid_how = {"inner", "left", "right"}
+    if how not in valid_how:
+        return make_error_response(f"Invalid 'how'. Use one of: {valid_how}")
+
+    valid_predicates = {"intersects", "contains", "within", "crosses", "touches"}
+    if predicate not in valid_predicates:
+        return make_error_response(f"Invalid predicate. Use one of: {valid_predicates}")
+
+    try:
+        # Parse features
+        left_gdf = gpd.GeoDataFrame.from_features(left_features.get("features", []))
+        right_gdf = gpd.GeoDataFrame.from_features(right_features.get("features", []))
+
+        if left_gdf.empty:
+            return make_error_response("Left features are empty")
+        if right_gdf.empty:
+            return make_error_response("Right features are empty")
+
+        # Set CRS if not present
+        if left_gdf.crs is None:
+            left_gdf = left_gdf.set_crs("EPSG:4326")
+        if right_gdf.crs is None:
+            right_gdf = right_gdf.set_crs("EPSG:4326")
+
+        # Ensure same CRS
+        if left_gdf.crs != right_gdf.crs:
+            right_gdf = right_gdf.to_crs(left_gdf.crs)
+
+        # Perform spatial join
+        result = gpd.sjoin(left_gdf, right_gdf, how=how, predicate=predicate)
+
+        # Convert to GeoJSON
+        geojson = result.__geo_interface__
+
+        data = {
+            "type": "FeatureCollection",
+            "features": geojson.get("features", []),
+            "feature_count": len(result),
+        }
+
+        metadata = {
+            "how": how,
+            "predicate": predicate,
+            "left_count": len(left_gdf),
+            "right_count": len(right_gdf),
+            "result_count": len(result),
+            "columns": list(result.columns),
+        }
+
+        return make_success_response(data, metadata)
+
+    except Exception as e:
+        logger.exception(f"Error in spatial join: {e}")
+        return make_error_response(f"Spatial join failed: {str(e)}")
+
+
+async def clip_features(
+    features: dict[str, Any],
+    clip_geometry: dict[str, Any]
+) -> dict[str, Any]:
+    """Clip features to a boundary geometry.
+
+    Args:
+        features: GeoJSON FeatureCollection to clip.
+        clip_geometry: GeoJSON geometry or FeatureCollection to clip by.
+
+    Returns:
+        GIS response with clipped features.
+    """
+    try:
+        from shapely.geometry import shape
+
+        # Parse features
+        gdf = gpd.GeoDataFrame.from_features(features.get("features", []))
+
+        if gdf.empty:
+            return make_error_response("Features are empty")
+
+        # Parse clip geometry
+        if clip_geometry.get("type") == "FeatureCollection":
+            clip_gdf = gpd.GeoDataFrame.from_features(clip_geometry.get("features", []))
+            clip_geom = clip_gdf.unary_union
+        elif clip_geometry.get("type") == "Feature":
+            clip_geom = shape(clip_geometry.get("geometry"))
+        else:
+            clip_geom = shape(clip_geometry)
+
+        # Set CRS
+        if gdf.crs is None:
+            gdf = gdf.set_crs("EPSG:4326")
+
+        # Clip
+        result = gpd.clip(gdf, clip_geom)
+
+        if result.empty:
+            return make_error_response("Clip resulted in no features")
+
+        # Convert to GeoJSON
+        geojson = result.__geo_interface__
+
+        data = {
+            "type": "FeatureCollection",
+            "features": geojson.get("features", []),
+            "feature_count": len(result),
+        }
+
+        metadata = {
+            "original_count": len(gdf),
+            "clipped_count": len(result),
+            "bounds": list(result.total_bounds),
+        }
+
+        return make_success_response(data, metadata)
+
+    except Exception as e:
+        logger.exception(f"Error clipping features: {e}")
+        return make_error_response(f"Clip failed: {str(e)}")
+
+
+async def dissolve_features(
+    features: dict[str, Any],
+    by: str | None = None,
+    aggfunc: str | dict[str, str] = "first"
+) -> dict[str, Any]:
+    """Dissolve features, optionally by a property.
+
+    Args:
+        features: GeoJSON FeatureCollection.
+        by: Property name to dissolve by (None for all features).
+        aggfunc: Aggregation function ('first', 'last', 'sum', 'mean', etc.).
+
+    Returns:
+        GIS response with dissolved features.
+    """
+    try:
+        gdf = gpd.GeoDataFrame.from_features(features.get("features", []))
+
+        if gdf.empty:
+            return make_error_response("Features are empty")
+
+        if gdf.crs is None:
+            gdf = gdf.set_crs("EPSG:4326")
+
+        # Validate 'by' field
+        if by and by not in gdf.columns:
+            return make_error_response(
+                f"Field '{by}' not found. Available: {list(gdf.columns)}"
+            )
+
+        # Dissolve
+        if by:
+            result = gdf.dissolve(by=by, aggfunc=aggfunc).reset_index()
+        else:
+            # Dissolve all into one
+            result = gpd.GeoDataFrame(
+                geometry=[gdf.unary_union],
+                crs=gdf.crs
+            )
+
+        # Convert to GeoJSON
+        geojson = result.__geo_interface__
+
+        data = {
+            "type": "FeatureCollection",
+            "features": geojson.get("features", []),
+            "feature_count": len(result),
+        }
+
+        metadata = {
+            "original_count": len(gdf),
+            "dissolved_count": len(result),
+            "dissolved_by": by,
+            "aggfunc": str(aggfunc),
+        }
+
+        return make_success_response(data, metadata)
+
+    except Exception as e:
+        logger.exception(f"Error dissolving features: {e}")
+        return make_error_response(f"Dissolve failed: {str(e)}")
+
+
+async def overlay_features(
+    features1: dict[str, Any],
+    features2: dict[str, Any],
+    how: str = "intersection"
+) -> dict[str, Any]:
+    """Perform overlay operation between two feature collections.
+
+    Args:
+        features1: First GeoJSON FeatureCollection.
+        features2: Second GeoJSON FeatureCollection.
+        how: Overlay operation ('intersection', 'union', 'difference', 'symmetric_difference').
+
+    Returns:
+        GIS response with overlay result.
+    """
+    valid_how = {"intersection", "union", "difference", "symmetric_difference", "identity"}
+    if how not in valid_how:
+        return make_error_response(f"Invalid 'how'. Use one of: {valid_how}")
+
+    try:
+        gdf1 = gpd.GeoDataFrame.from_features(features1.get("features", []))
+        gdf2 = gpd.GeoDataFrame.from_features(features2.get("features", []))
+
+        if gdf1.empty:
+            return make_error_response("First features are empty")
+        if gdf2.empty:
+            return make_error_response("Second features are empty")
+
+        # Set CRS
+        if gdf1.crs is None:
+            gdf1 = gdf1.set_crs("EPSG:4326")
+        if gdf2.crs is None:
+            gdf2 = gdf2.set_crs("EPSG:4326")
+
+        # Ensure same CRS
+        if gdf1.crs != gdf2.crs:
+            gdf2 = gdf2.to_crs(gdf1.crs)
+
+        # Perform overlay
+        result = gpd.overlay(gdf1, gdf2, how=how)
+
+        if result.empty:
+            return make_error_response(f"Overlay '{how}' resulted in no features")
+
+        # Convert to GeoJSON
+        geojson = result.__geo_interface__
+
+        data = {
+            "type": "FeatureCollection",
+            "features": geojson.get("features", []),
+            "feature_count": len(result),
+        }
+
+        metadata = {
+            "operation": how,
+            "input1_count": len(gdf1),
+            "input2_count": len(gdf2),
+            "result_count": len(result),
+            "columns": list(result.columns),
+        }
+
+        return make_success_response(data, metadata)
+
+    except Exception as e:
+        logger.exception(f"Error in overlay: {e}")
+        return make_error_response(f"Overlay failed: {str(e)}")
+
+
+async def merge_features(
+    feature_collections: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Merge multiple feature collections into one.
+
+    Args:
+        feature_collections: List of GeoJSON FeatureCollections.
+
+    Returns:
+        GIS response with merged features.
+    """
+    if not feature_collections:
+        return make_error_response("No feature collections provided")
+
+    if len(feature_collections) < 2:
+        return make_error_response("At least 2 feature collections required for merge")
+
+    try:
+        gdfs = []
+        for i, fc in enumerate(feature_collections):
+            if fc.get("type") != "FeatureCollection":
+                return make_error_response(f"Item {i} is not a FeatureCollection")
+            gdf = gpd.GeoDataFrame.from_features(fc.get("features", []))
+            if gdf.crs is None:
+                gdf = gdf.set_crs("EPSG:4326")
+            gdfs.append(gdf)
+
+        # Merge all to same CRS
+        target_crs = gdfs[0].crs
+        gdfs = [gdf.to_crs(target_crs) if gdf.crs != target_crs else gdf for gdf in gdfs]
+
+        # Concatenate
+        import pandas as pd
+        result = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=target_crs)
+
+        # Convert to GeoJSON
+        geojson = result.__geo_interface__
+
+        data = {
+            "type": "FeatureCollection",
+            "features": geojson.get("features", []),
+            "feature_count": len(result),
+        }
+
+        metadata = {
+            "input_counts": [len(gdf) for gdf in gdfs],
+            "total_count": len(result),
+            "columns": list(result.columns),
+        }
+
+        return make_success_response(data, metadata)
+
+    except Exception as e:
+        logger.exception(f"Error merging features: {e}")
+        return make_error_response(f"Merge failed: {str(e)}")
