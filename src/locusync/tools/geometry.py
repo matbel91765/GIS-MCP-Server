@@ -60,7 +60,7 @@ def _geodesic_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
     geod = Geod(ellps="WGS84")
     _, _, distance = geod.inv(lon1, lat1, lon2, lat2)
-    return abs(distance)
+    return abs(float(distance))
 
 
 async def calculate_distance(
@@ -622,7 +622,7 @@ async def calculate_length(geometry: dict[str, Any]) -> dict[str, Any]:
 
         length_m = geom_utm.length
 
-        data = {
+        data: dict[str, Any] = {
             "length": {
                 "meters": round(length_m, 2),
                 "kilometers": round(length_m / 1000, 6),

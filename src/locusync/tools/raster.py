@@ -21,7 +21,7 @@ except ImportError:
     logger.warning("Rasterio not available. Raster tools will be disabled.")
 
 
-def _check_rasterio():
+def _check_rasterio() -> dict[str, Any] | None:
     """Check if rasterio is available."""
     if not RASTERIO_AVAILABLE:
         return make_error_response(
@@ -46,7 +46,7 @@ async def read_raster(
         GIS response with raster metadata and statistics.
     """
     error = _check_rasterio()
-    if error:
+    if error is not None:
         return error
 
     if not os.path.exists(file_path):
@@ -99,7 +99,7 @@ async def read_raster(
         return make_error_response(f"Failed to read raster: {str(e)}")
 
 
-def _compute_band_stats(data: np.ndarray, nodata: float | None, band_num: int) -> dict:
+def _compute_band_stats(data: np.ndarray[Any, Any], nodata: float | None, band_num: int) -> dict[str, Any]:
     """Compute statistics for a raster band."""
     # Mask nodata values
     valid_data = data[data != nodata] if nodata is not None else data.flatten()
@@ -141,7 +141,7 @@ async def calculate_ndvi(
         GIS response with NDVI statistics.
     """
     error = _check_rasterio()
-    if error:
+    if error is not None:
         return error
 
     for path in [red_band_path, nir_band_path]:
@@ -239,7 +239,7 @@ async def calculate_hillshade(
         GIS response with hillshade metadata.
     """
     error = _check_rasterio()
-    if error:
+    if error is not None:
         return error
 
     if not os.path.exists(dem_path):
@@ -324,7 +324,7 @@ async def calculate_slope(
         GIS response with slope statistics.
     """
     error = _check_rasterio()
-    if error:
+    if error is not None:
         return error
 
     if not os.path.exists(dem_path):
@@ -419,7 +419,7 @@ async def zonal_statistics(
         GIS response with statistics for each zone.
     """
     error = _check_rasterio()
-    if error:
+    if error is not None:
         return error
 
     try:
@@ -522,7 +522,7 @@ async def reproject_raster(
         GIS response with reprojection results.
     """
     error = _check_rasterio()
-    if error:
+    if error is not None:
         return error
 
     if not os.path.exists(input_path):
@@ -607,7 +607,7 @@ async def raster_calculator(
         GIS response with calculation results.
     """
     error = _check_rasterio()
-    if error:
+    if error is not None:
         return error
 
     # Validate inputs
@@ -632,11 +632,18 @@ async def raster_calculator(
                     profile = src.profile.copy()
                     profile.update(dtype=rasterio.float32, count=1)
 
+        # Ensure profile is not None
+        if profile is None:
+            return make_error_response("No valid raster data found")
+
         # Evaluate expression
         result = eval(expression, {"__builtins__": {}, "np": np}, raster_data)
 
         # Handle invalid values
-        result = np.where(np.isfinite(result), result, profile.get("nodata", -9999))
+        nodata_value = profile.get("nodata")
+        if nodata_value is None:
+            nodata_value = -9999
+        result = np.where(np.isfinite(result), result, nodata_value)
 
         # Write output
         with rasterio.open(output_path, 'w', **profile) as dst:

@@ -1,7 +1,7 @@
 """Geocoding tools for GIS MCP Server."""
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 
@@ -55,7 +55,7 @@ async def _nominatim_request(
         timeout=aiohttp.ClientTimeout(total=config.nominatim.timeout)
     ) as response:
         response.raise_for_status()
-        return await response.json()
+        return cast(dict[str, Any], await response.json())
 
 
 async def _pelias_geocode(address: str) -> dict[str, Any]:
@@ -92,7 +92,7 @@ async def _pelias_geocode(address: str) -> dict[str, Any]:
         timeout=aiohttp.ClientTimeout(total=config.pelias.timeout)
     ) as response:
         response.raise_for_status()
-        return await response.json()
+        return cast(dict[str, Any], await response.json())
 
 
 async def _pelias_reverse(lat: float, lon: float) -> dict[str, Any]:
@@ -115,7 +115,7 @@ async def _pelias_reverse(lat: float, lon: float) -> dict[str, Any]:
         raise ValueError("Pelias base_url not configured")
 
     url = f"{config.pelias.base_url}/v1/reverse"
-    params = {
+    params: dict[str, Any] = {
         "point.lat": lat,
         "point.lon": lon,
     }
@@ -133,7 +133,7 @@ async def _pelias_reverse(lat: float, lon: float) -> dict[str, Any]:
         timeout=aiohttp.ClientTimeout(total=config.pelias.timeout)
     ) as response:
         response.raise_for_status()
-        return await response.json()
+        return cast(dict[str, Any], await response.json())
 
 
 async def geocode_address(address: str, provider: str = "nominatim") -> dict[str, Any]:
@@ -165,10 +165,10 @@ async def geocode_address(address: str, provider: str = "nominatim") -> dict[str
     try:
         if provider == "pelias":
             # Use Pelias
-            async def do_request() -> dict[str, Any]:
+            async def do_pelias_request() -> dict[str, Any]:
                 return await _pelias_geocode(address.strip())
 
-            response = await retry_async(do_request, max_retries=3)
+            response = await retry_async(do_pelias_request, max_retries=3)
 
             # Parse Pelias response
             features = response.get("features", [])
@@ -228,10 +228,10 @@ async def geocode_address(address: str, provider: str = "nominatim") -> dict[str
                 "limit": 1,
             }
 
-            async def do_request() -> list[dict[str, Any]]:
+            async def do_nominatim_request() -> Any:
                 return await _nominatim_request("search", params)
 
-            results = await retry_async(do_request, max_retries=3)
+            results = await retry_async(do_nominatim_request, max_retries=3)
 
             if not results:
                 return make_error_response(
@@ -246,7 +246,8 @@ async def geocode_address(address: str, provider: str = "nominatim") -> dict[str
             lon = float(result["lon"])
 
             # Calculate confidence based on importance score
-            importance = float(result.get("importance", 0.5))
+            importance_val = result.get("importance", 0.5)
+            importance = float(importance_val) if importance_val is not None else 0.5
             confidence = min(importance * 1.2, 1.0)  # Scale to 0-1
 
             # Build response data
@@ -409,10 +410,10 @@ async def reverse_geocode_coords(
     try:
         if provider == "pelias":
             # Use Pelias
-            async def do_request() -> dict[str, Any]:
+            async def do_pelias_reverse() -> dict[str, Any]:
                 return await _pelias_reverse(lat, lon)
 
-            response = await retry_async(do_request, max_retries=3)
+            response = await retry_async(do_pelias_reverse, max_retries=3)
 
             # Parse Pelias response
             features = response.get("features", [])
@@ -475,10 +476,10 @@ async def reverse_geocode_coords(
                 "zoom": 18,  # Building level detail
             }
 
-            async def do_request() -> dict[str, Any]:
+            async def do_nominatim_reverse() -> Any:
                 return await _nominatim_request("reverse", params)
 
-            result = await retry_async(do_request, max_retries=3)
+            result = await retry_async(do_nominatim_reverse, max_retries=3)
 
             if not result or "error" in result:
                 error_msg = result.get("error", "Unknown error") if result else "No result"

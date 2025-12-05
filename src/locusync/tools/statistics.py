@@ -22,7 +22,7 @@ except ImportError:
     logger.warning("PySAL not available. Spatial statistics tools will be disabled.")
 
 
-def _check_pysal():
+def _check_pysal() -> dict[str, Any] | None:
     """Check if PySAL is available."""
     if not PYSAL_AVAILABLE:
         return make_error_response(
@@ -54,7 +54,7 @@ async def calculate_moran_i(
         GIS response with Moran's I results.
     """
     error = _check_pysal()
-    if error:
+    if error is not None:
         return error
 
     try:
@@ -154,7 +154,7 @@ async def calculate_local_moran(
         GIS response with local statistics for each feature.
     """
     error = _check_pysal()
-    if error:
+    if error is not None:
         return error
 
     try:
@@ -267,7 +267,7 @@ async def calculate_getis_ord(
         GIS response with Gi* statistics.
     """
     error = _check_pysal()
-    if error:
+    if error is not None:
         return error
 
     try:
@@ -392,7 +392,7 @@ async def create_spatial_weights(
         GIS response with weights matrix summary.
     """
     error = _check_pysal()
-    if error:
+    if error is not None:
         return error
 
     try:

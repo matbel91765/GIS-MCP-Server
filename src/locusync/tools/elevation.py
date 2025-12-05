@@ -1,7 +1,7 @@
 """Elevation and terrain data tools for GIS MCP Server."""
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 
@@ -40,7 +40,7 @@ async def _open_elevation_request(locations: list[dict[str, float]]) -> dict[str
                 timeout=aiohttp.ClientTimeout(total=config.open_elevation.timeout)
             ) as response:
                 response.raise_for_status()
-                return await response.json()
+                return cast(dict[str, Any], await response.json())
         except aiohttp.ClientError as e:
             logger.error(f"Open-Elevation API request failed: {e}")
             raise
@@ -67,7 +67,11 @@ async def get_elevation(lat: float, lon: float) -> dict[str, Any]:
     try:
         # Make request to Open-Elevation API
         locations = [{"latitude": lat, "longitude": lon}]
-        response = await retry_async(_open_elevation_request, locations)
+
+        async def do_request() -> dict[str, Any]:
+            return await _open_elevation_request(locations)
+
+        response = await retry_async(do_request)
 
         if "results" not in response or not response["results"]:
             return make_error_response("No elevation data returned from API")
@@ -142,7 +146,10 @@ async def get_elevation_profile(coordinates: list[list[float]]) -> dict[str, Any
         ]
 
         # Make request to Open-Elevation API
-        response = await retry_async(_open_elevation_request, locations)
+        async def do_request() -> dict[str, Any]:
+            return await _open_elevation_request(locations)
+
+        response = await retry_async(do_request)
 
         if "results" not in response or not response["results"]:
             return make_error_response("No elevation data returned from API")

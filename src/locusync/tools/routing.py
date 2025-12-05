@@ -2,7 +2,7 @@
 
 import logging
 import math
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 
@@ -73,7 +73,7 @@ async def _osrm_request(
         timeout=aiohttp.ClientTimeout(total=config.osrm.timeout)
     ) as response:
         response.raise_for_status()
-        return await response.json()
+        return cast(dict[str, Any], await response.json())
 
 
 async def calculate_route(

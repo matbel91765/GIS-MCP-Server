@@ -1,7 +1,7 @@
 """LocuSync Server - Main entry point."""
 
 import logging
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastmcp import FastMCP
 from pydantic import Field
@@ -125,7 +125,7 @@ mcp = FastMCP("LocuSync Server")
 @mcp.tool()
 async def geocode(
     address: Annotated[str, Field(description="Address to geocode")]
-) -> dict:
+) -> dict[str, Any]:
     """Convert an address to geographic coordinates (latitude/longitude)."""
     return await geocode_address(address)
 
@@ -134,7 +134,7 @@ async def geocode(
 async def reverse_geocode(
     lat: Annotated[float, Field(description="Latitude (-90 to 90)")],
     lon: Annotated[float, Field(description="Longitude (-180 to 180)")]
-) -> dict:
+) -> dict[str, Any]:
     """Convert coordinates to an address (reverse geocoding)."""
     return await reverse_geocode_coords(lat, lon)
 
@@ -150,37 +150,37 @@ async def distance(
     lat2: Annotated[float, Field(description="Latitude of second point")],
     lon2: Annotated[float, Field(description="Longitude of second point")],
     method: Annotated[str, Field(description="Method: 'haversine' or 'geodesic'")] = "geodesic"
-) -> dict:
+) -> dict[str, Any]:
     """Calculate the distance between two geographic points."""
     return await calculate_distance(lat1, lon1, lat2, lon2, method)
 
 
 @mcp.tool()
 async def buffer(
-    geometry: Annotated[dict, Field(description="GeoJSON geometry")],
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON geometry")],
     distance_meters: Annotated[float, Field(description="Buffer distance in meters")],
     resolution: Annotated[int, Field(description="Segments for curved edges")] = 16
-) -> dict:
+) -> dict[str, Any]:
     """Create a buffer zone around a geometry."""
     return await calculate_buffer(geometry, distance_meters, resolution)
 
 
 @mcp.tool()
 async def spatial_query(
-    geometry1: Annotated[dict, Field(description="First GeoJSON geometry")],
-    geometry2: Annotated[dict, Field(description="Second GeoJSON geometry")],
+    geometry1: Annotated[dict[str, Any], Field(description="First GeoJSON geometry")],
+    geometry2: Annotated[dict[str, Any], Field(description="Second GeoJSON geometry")],
     operation: Annotated[str, Field(description="Spatial operation to perform")]
-) -> dict:
+) -> dict[str, Any]:
     """Perform spatial operations between two geometries."""
     return await perform_spatial_query(geometry1, geometry2, operation)
 
 
 @mcp.tool()
 async def transform_crs(
-    geometry: Annotated[dict, Field(description="GeoJSON geometry to transform")],
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON geometry to transform")],
     source_crs: Annotated[str, Field(description="Source CRS (e.g., 'EPSG:4326')")],
     target_crs: Annotated[str, Field(description="Target CRS (e.g., 'EPSG:3857')")]
-) -> dict:
+) -> dict[str, Any]:
     """Transform coordinates between coordinate reference systems."""
     return await transform_coordinates(geometry, source_crs, target_crs)
 
@@ -191,58 +191,58 @@ async def transform_crs(
 
 @mcp.tool()
 async def centroid(
-    geometry: Annotated[dict, Field(description="GeoJSON geometry")]
-) -> dict:
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON geometry")]
+) -> dict[str, Any]:
     """Get the centroid (center point) of a geometry."""
     return await _get_centroid(geometry)
 
 
 @mcp.tool()
 async def simplify(
-    geometry: Annotated[dict, Field(description="GeoJSON geometry")],
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON geometry")],
     tolerance: Annotated[float, Field(description="Simplification tolerance")],
     preserve_topology: Annotated[bool, Field(description="Preserve topology")] = True
-) -> dict:
+) -> dict[str, Any]:
     """Simplify a geometry using Douglas-Peucker algorithm."""
     return await _simplify_geometry(geometry, tolerance, preserve_topology)
 
 
 @mcp.tool()
 async def convex_hull(
-    geometry: Annotated[dict, Field(description="GeoJSON geometry")]
-) -> dict:
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON geometry")]
+) -> dict[str, Any]:
     """Get the convex hull of a geometry."""
     return await _get_convex_hull(geometry)
 
 
 @mcp.tool()
 async def envelope(
-    geometry: Annotated[dict, Field(description="GeoJSON geometry")]
-) -> dict:
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON geometry")]
+) -> dict[str, Any]:
     """Get the bounding box (envelope) of a geometry."""
     return await _get_envelope(geometry)
 
 
 @mcp.tool()
 async def validate(
-    geometry: Annotated[dict, Field(description="GeoJSON geometry")]
-) -> dict:
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON geometry")]
+) -> dict[str, Any]:
     """Validate a geometry and fix it if invalid."""
     return await _validate_geometry(geometry)
 
 
 @mcp.tool()
 async def area(
-    geometry: Annotated[dict, Field(description="GeoJSON Polygon or MultiPolygon")]
-) -> dict:
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON Polygon or MultiPolygon")]
+) -> dict[str, Any]:
     """Calculate the area of a polygon geometry in multiple units."""
     return await _calculate_area(geometry)
 
 
 @mcp.tool()
 async def length(
-    geometry: Annotated[dict, Field(description="GeoJSON geometry")]
-) -> dict:
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON geometry")]
+) -> dict[str, Any]:
     """Calculate the length/perimeter of a geometry."""
     return await _calculate_length(geometry)
 
@@ -255,7 +255,7 @@ async def length(
 async def utm_zone(
     lat: Annotated[float, Field(description="Latitude")],
     lon: Annotated[float, Field(description="Longitude")]
-) -> dict:
+) -> dict[str, Any]:
     """Get the UTM zone for a given coordinate."""
     return await _get_utm_zone(lat, lon)
 
@@ -263,7 +263,7 @@ async def utm_zone(
 @mcp.tool()
 async def crs_info(
     crs_code: Annotated[str, Field(description="CRS identifier (e.g., 'EPSG:4326')")]
-) -> dict:
+) -> dict[str, Any]:
     """Get detailed information about a coordinate reference system."""
     return await _get_crs_info(crs_code)
 
@@ -279,7 +279,7 @@ async def route(
     end_lat: Annotated[float, Field(description="End point latitude")],
     end_lon: Annotated[float, Field(description="End point longitude")],
     profile: Annotated[str, Field(description="Profile: driving/walking/cycling")] = "driving"
-) -> dict:
+) -> dict[str, Any]:
     """Calculate a route between two points."""
     return await calculate_route(start_lat, start_lon, end_lat, end_lon, profile)
 
@@ -290,7 +290,7 @@ async def isochrone(
     lon: Annotated[float, Field(description="Center point longitude")],
     time_minutes: Annotated[int, Field(description="Travel time in minutes")],
     profile: Annotated[str, Field(description="Profile: driving/walking/cycling")] = "driving"
-) -> dict:
+) -> dict[str, Any]:
     """Calculate an isochrone (area reachable within a time limit)."""
     return await calculate_isochrone(lat, lon, time_minutes, profile)
 
@@ -303,18 +303,23 @@ async def isochrone(
 async def elevation(
     lat: Annotated[float, Field(description="Latitude")],
     lon: Annotated[float, Field(description="Longitude")]
-) -> dict:
+) -> dict[str, Any]:
     """Get elevation for a single point (meters above sea level)."""
     return await get_elevation(lat, lon)
 
 
 @mcp.tool()
 async def elevation_profile(
-    geometry: Annotated[dict, Field(description="GeoJSON LineString geometry")],
+    geometry: Annotated[dict[str, Any], Field(description="GeoJSON LineString geometry")],
     samples: Annotated[int, Field(description="Number of sample points")] = 100
-) -> dict:
+) -> dict[str, Any]:
     """Get elevation profile along a line."""
-    return await get_elevation_profile(geometry, samples)
+    # Extract coordinates from geometry
+    if "coordinates" in geometry:
+        coordinates = geometry["coordinates"]
+    else:
+        coordinates = []
+    return await get_elevation_profile(coordinates)
 
 
 # =============================================================================
@@ -326,17 +331,17 @@ async def read_file(
     file_path: Annotated[str, Field(description="Path to geospatial file")],
     layer: Annotated[str | None, Field(description="Layer name")] = None,
     limit: Annotated[int | None, Field(description="Max features to return")] = None
-) -> dict:
+) -> dict[str, Any]:
     """Read a geospatial file (GeoJSON, Shapefile, GeoPackage, etc.)."""
     return await read_geo_file(file_path, layer, limit)
 
 
 @mcp.tool()
 async def write_file(
-    features: Annotated[dict, Field(description="GeoJSON FeatureCollection")],
+    features: Annotated[dict[str, Any], Field(description="GeoJSON FeatureCollection")],
     file_path: Annotated[str, Field(description="Output file path")],
     driver: Annotated[str, Field(description="Format: GeoJSON/Shapefile/GPKG")] = "GeoJSON"
-) -> dict:
+) -> dict[str, Any]:
     """Write features to a geospatial file."""
     return await write_geo_file(features, file_path, driver)
 
@@ -347,48 +352,48 @@ async def write_file(
 
 @mcp.tool()
 async def spatial_join(
-    left_features: Annotated[dict, Field(description="Left GeoJSON FeatureCollection")],
-    right_features: Annotated[dict, Field(description="Right GeoJSON FeatureCollection")],
+    left_features: Annotated[dict[str, Any], Field(description="Left GeoJSON FeatureCollection")],
+    right_features: Annotated[dict[str, Any], Field(description="Right GeoJSON FeatureCollection")],
     how: Annotated[str, Field(description="Join type: inner/left/right")] = "inner",
     predicate: Annotated[str, Field(description="Spatial predicate")] = "intersects"
-) -> dict:
+) -> dict[str, Any]:
     """Perform a spatial join between two feature collections."""
     return await _spatial_join(left_features, right_features, how, predicate)
 
 
 @mcp.tool()
 async def clip(
-    features: Annotated[dict, Field(description="GeoJSON FeatureCollection to clip")],
-    clip_geometry: Annotated[dict, Field(description="GeoJSON geometry to clip by")]
-) -> dict:
+    features: Annotated[dict[str, Any], Field(description="GeoJSON FeatureCollection to clip")],
+    clip_geometry: Annotated[dict[str, Any], Field(description="GeoJSON geometry to clip by")]
+) -> dict[str, Any]:
     """Clip features to a boundary geometry."""
     return await _clip_features(features, clip_geometry)
 
 
 @mcp.tool()
 async def dissolve(
-    features: Annotated[dict, Field(description="GeoJSON FeatureCollection")],
+    features: Annotated[dict[str, Any], Field(description="GeoJSON FeatureCollection")],
     by: Annotated[str | None, Field(description="Field to dissolve by")] = None,
     aggfunc: Annotated[str, Field(description="Aggregation: first/last/sum/mean")] = "first"
-) -> dict:
+) -> dict[str, Any]:
     """Dissolve features, optionally by a property."""
     return await _dissolve_features(features, by, aggfunc)
 
 
 @mcp.tool()
 async def overlay(
-    features1: Annotated[dict, Field(description="First GeoJSON FeatureCollection")],
-    features2: Annotated[dict, Field(description="Second GeoJSON FeatureCollection")],
+    features1: Annotated[dict[str, Any], Field(description="First GeoJSON FeatureCollection")],
+    features2: Annotated[dict[str, Any], Field(description="Second GeoJSON FeatureCollection")],
     how: Annotated[str, Field(description="Overlay operation")] = "intersection"
-) -> dict:
+) -> dict[str, Any]:
     """Perform overlay operation between two feature collections."""
     return await _overlay_features(features1, features2, how)
 
 
 @mcp.tool()
 async def merge(
-    feature_collections: Annotated[list[dict], Field(description="GeoJSON FeatureCollections")]
-) -> dict:
+    feature_collections: Annotated[list[dict[str, Any]], Field(description="GeoJSON FeatureCollections")]
+) -> dict[str, Any]:
     """Merge multiple feature collections into one."""
     return await _merge_features(feature_collections)
 
@@ -401,7 +406,7 @@ async def merge(
 async def read_raster(
     file_path: Annotated[str, Field(description="Path to raster file")],
     band: Annotated[int | None, Field(description="Band number (1-indexed)")] = None
-) -> dict:
+) -> dict[str, Any]:
     """Read a raster file and return metadata and statistics."""
     return await _read_raster(file_path, band)
 
@@ -411,7 +416,7 @@ async def ndvi(
     red_band_path: Annotated[str, Field(description="Path to red band raster")],
     nir_band_path: Annotated[str, Field(description="Path to NIR band raster")],
     output_path: Annotated[str | None, Field(description="Output file path")] = None
-) -> dict:
+) -> dict[str, Any]:
     """Calculate NDVI (Normalized Difference Vegetation Index)."""
     return await _calculate_ndvi(red_band_path, nir_band_path, output_path)
 
@@ -422,7 +427,7 @@ async def hillshade(
     output_path: Annotated[str | None, Field(description="Output file path")] = None,
     azimuth: Annotated[float, Field(description="Sun azimuth (degrees)")] = 315,
     altitude: Annotated[float, Field(description="Sun altitude (degrees)")] = 45
-) -> dict:
+) -> dict[str, Any]:
     """Calculate hillshade from a Digital Elevation Model."""
     return await _calculate_hillshade(dem_path, output_path, azimuth, altitude)
 
@@ -432,7 +437,7 @@ async def slope(
     dem_path: Annotated[str, Field(description="Path to DEM raster")],
     output_path: Annotated[str | None, Field(description="Output file path")] = None,
     units: Annotated[str, Field(description="Output units: degrees/percent")] = "degrees"
-) -> dict:
+) -> dict[str, Any]:
     """Calculate slope from a Digital Elevation Model."""
     return await _calculate_slope(dem_path, output_path, units)
 
@@ -442,7 +447,7 @@ async def zonal_stats(
     raster_path: Annotated[str, Field(description="Path to raster file")],
     zones_path: Annotated[str, Field(description="Path to vector zones file")],
     band: Annotated[int, Field(description="Band number")] = 1
-) -> dict:
+) -> dict[str, Any]:
     """Calculate zonal statistics for a raster using vector zones."""
     return await _zonal_statistics(raster_path, zones_path, band)
 
@@ -453,7 +458,7 @@ async def reproject_raster(
     output_path: Annotated[str, Field(description="Output raster path")],
     target_crs: Annotated[str, Field(description="Target CRS (e.g., 'EPSG:4326')")],
     resampling: Annotated[str, Field(description="Resampling: nearest/bilinear/cubic")] = "nearest"
-) -> dict:
+) -> dict[str, Any]:
     """Reproject a raster to a different CRS."""
     return await _reproject_raster(input_path, output_path, target_crs, resampling)
 
@@ -463,7 +468,7 @@ async def raster_calc(
     expression: Annotated[str, Field(description="Math expression (e.g., 'A + B')")],
     rasters: Annotated[dict[str, str], Field(description="Variable to file path mapping")],
     output_path: Annotated[str, Field(description="Output file path")]
-) -> dict:
+) -> dict[str, Any]:
     """Perform raster algebra using a mathematical expression."""
     return await _raster_calculator(expression, rasters, output_path)
 
@@ -474,32 +479,32 @@ async def raster_calc(
 
 @mcp.tool()
 async def static_map(
-    features: Annotated[dict, Field(description="GeoJSON features")],
+    features: Annotated[dict[str, Any], Field(description="GeoJSON features")],
     output_path: Annotated[str | None, Field(description="Output file path")] = None,
     title: Annotated[str | None, Field(description="Map title")] = None
-) -> dict:
+) -> dict[str, Any]:
     """Create a static map image from GeoJSON features (requires matplotlib)."""
     return await _create_static_map(features, output_path, title)
 
 
 @mcp.tool()
 async def web_map(
-    features: Annotated[dict, Field(description="GeoJSON features")],
+    features: Annotated[dict[str, Any], Field(description="GeoJSON features")],
     output_path: Annotated[str | None, Field(description="Output HTML file path")] = None,
     title: Annotated[str | None, Field(description="Map title")] = None,
     basemap: Annotated[str, Field(description="Basemap provider")] = "OpenStreetMap"
-) -> dict:
+) -> dict[str, Any]:
     """Create an interactive web map (requires folium)."""
     return await _create_web_map(features, output_path, title=title, basemap=basemap)
 
 
 @mcp.tool()
 async def choropleth_map(
-    features: Annotated[dict, Field(description="GeoJSON FeatureCollection")],
+    features: Annotated[dict[str, Any], Field(description="GeoJSON FeatureCollection")],
     value_field: Annotated[str, Field(description="Property field for coloring")],
     output_path: Annotated[str | None, Field(description="Output HTML file path")] = None,
     title: Annotated[str | None, Field(description="Map title")] = None
-) -> dict:
+) -> dict[str, Any]:
     """Create a choropleth (thematic) map based on a property value."""
     return await _create_choropleth_map(features, value_field, output_path, title=title)
 
@@ -510,45 +515,45 @@ async def choropleth_map(
 
 @mcp.tool()
 async def moran_i(
-    features: Annotated[dict, Field(description="GeoJSON FeatureCollection")],
+    features: Annotated[dict[str, Any], Field(description="GeoJSON FeatureCollection")],
     value_field: Annotated[str, Field(description="Numeric property field")],
     weight_type: Annotated[str, Field(description="Weight type: queen/rook/knn")] = "queen"
-) -> dict:
+) -> dict[str, Any]:
     """Calculate Global Moran's I for spatial autocorrelation (requires libpysal)."""
     return await _calculate_moran_i(features, value_field, weight_type)
 
 
 @mcp.tool()
 async def local_moran(
-    features: Annotated[dict, Field(description="GeoJSON FeatureCollection")],
+    features: Annotated[dict[str, Any], Field(description="GeoJSON FeatureCollection")],
     value_field: Annotated[str, Field(description="Numeric property field")],
     weight_type: Annotated[str, Field(description="Weight type: queen/rook/knn")] = "queen"
-) -> dict:
+) -> dict[str, Any]:
     """Calculate Local Moran's I (LISA) for cluster detection."""
     return await _calculate_local_moran(features, value_field, weight_type)
 
 
 @mcp.tool()
 async def hotspot_analysis(
-    features: Annotated[dict, Field(description="GeoJSON FeatureCollection")],
+    features: Annotated[dict[str, Any], Field(description="GeoJSON FeatureCollection")],
     value_field: Annotated[str, Field(description="Numeric property field")],
     weight_type: Annotated[str, Field(description="Weight type: distance/queen")] = "distance"
-) -> dict:
+) -> dict[str, Any]:
     """Perform Getis-Ord Gi* hot spot analysis."""
     return await _calculate_getis_ord(features, value_field, weight_type)
 
 
 @mcp.tool()
 async def spatial_weights(
-    features: Annotated[dict, Field(description="GeoJSON FeatureCollection")],
+    features: Annotated[dict[str, Any], Field(description="GeoJSON FeatureCollection")],
     weight_type: Annotated[str, Field(description="Type: queen/rook/knn/distance")] = "queen",
     k: Annotated[int, Field(description="Number of neighbors for KNN")] = 5
-) -> dict:
+) -> dict[str, Any]:
     """Create and analyze a spatial weights matrix."""
     return await _create_spatial_weights(features, weight_type, k)
 
 
-def main():
+def main() -> None:
     """Run the MCP server."""
     logger.info("Starting LocuSync Server...")
     config = get_config()

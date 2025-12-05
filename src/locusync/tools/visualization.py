@@ -293,11 +293,11 @@ async def create_web_map(
             m.get_root().html.add_child(folium.Element(title_html))
 
         # Create style function
-        def style_function(feature):
+        def style_function(feature: dict[str, Any]) -> dict[str, Any]:
             return default_style
 
         # Create popup function
-        def create_popup(feature):
+        def create_popup(feature: dict[str, Any]) -> folium.Popup | None:
             if popup_fields:
                 props = feature.get("properties", {})
                 html = "<br>".join([
@@ -333,7 +333,7 @@ async def create_web_map(
         m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
 
         # Save or return
-        result_data = {}
+        result_data: dict[str, Any] = {}
 
         if output_path:
             m.save(output_path)
@@ -345,7 +345,9 @@ async def create_web_map(
                 result_data["file_path"] = f.name
 
         # Also return HTML string for embedding
-        result_data["html_size_kb"] = round(len(m._repr_html_()) / 1024, 2)
+        html_repr = m._repr_html_()
+        if html_repr is not None:
+            result_data["html_size_kb"] = round(len(html_repr) / 1024, 2)
 
         data = {
             "success": True,
@@ -456,7 +458,7 @@ async def create_choropleth_map(
             colormap.caption = value_field
 
         # Style function
-        def style_function(feature):
+        def style_function(feature: dict[str, Any]) -> dict[str, Any]:
             value = feature["properties"].get(value_field)
             if value is None:
                 return {"fillColor": "#gray", "fillOpacity": 0.3}
