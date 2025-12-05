@@ -2,7 +2,7 @@
   "mcpServers": {
     "gis": {
       "command": "uvx",
-      "args": ["gis-mcp-server"]
+      "args": ["locusync-server"]
     }
   }
 }

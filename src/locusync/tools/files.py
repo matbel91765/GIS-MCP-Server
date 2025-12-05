@@ -6,8 +6,8 @@ from typing import Any
 
 import geopandas as gpd
 
-from gis_mcp.config import get_config
-from gis_mcp.utils import make_error_response, make_success_response
+from locusync.config import get_config
+from locusync.utils import make_error_response, make_success_response
 
 logger = logging.getLogger(__name__)
 

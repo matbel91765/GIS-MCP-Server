@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from gis_mcp.tools.files import (
+from locusync.tools.files import (
     read_geo_file,
     write_geo_file,
     _get_driver_for_path,

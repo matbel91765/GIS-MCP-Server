@@ -1,9 +1,9 @@
-# GIS MCP Server
+# LocuSync Server
 
-[![PyPI version](https://badge.fury.io/py/gis-mcp-server.svg)](https://badge.fury.io/py/gis-mcp-server)
+[![PyPI version](https://badge.fury.io/py/locusync-server.svg)](https://badge.fury.io/py/locusync-server)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/matbel91765/gis-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/matbel91765/gis-mcp-server/actions/workflows/ci.yml)
+[![CI](https://github.com/matbel91765/locusync-server/actions/workflows/ci.yml/badge.svg)](https://github.com/matbel91765/locusync-server/actions/workflows/ci.yml)
 
 A Model Context Protocol (MCP) server providing geospatial tools for AI agents. Enables Claude, GPT, and other LLMs to perform geocoding, routing, spatial analysis, and file operations.
 
@@ -21,11 +21,11 @@ A Model Context Protocol (MCP) server providing geospatial tools for AI agents. 
 
 ```bash
 # From PyPI (when published)
-pip install gis-mcp-server
+pip install locusync-server
 
 # From source
-git clone https://github.com/matbel91765/gis-mcp-server.git
-cd gis-mcp-server
+git clone https://github.com/matbel91765/locusync-server.git
+cd locusync-server
 pip install -e .
 ```
 
@@ -38,9 +38,9 @@ Add to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "gis": {
+    "locusync": {
       "command": "uvx",
-      "args": ["gis-mcp-server"]
+      "args": ["locusync-server"]
     }
   }
 }
@@ -50,7 +50,7 @@ Add to your `claude_desktop_config.json`:
 
 ```bash
 # Run the server
-gis-mcp-server
+locusync-server
 ```
 
 ## Available Tools
@@ -176,14 +176,14 @@ Environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `NOMINATIM_URL` | `https://nominatim.openstreetmap.org` | Nominatim API URL |
-| `NOMINATIM_USER_AGENT` | `gis-mcp-server/1.0.0` | User agent for Nominatim |
+| `NOMINATIM_USER_AGENT` | `locusync-server/1.0.0` | User agent for Nominatim |
 | `OSRM_URL` | `https://router.project-osrm.org` | OSRM API URL |
 | `OSRM_PROFILE` | `driving` | Default routing profile |
 | `PELIAS_URL` | (empty) | Pelias geocoding API URL |
 | `PELIAS_API_KEY` | (empty) | Pelias API key (optional) |
 | `OPEN_ELEVATION_URL` | `https://api.open-elevation.com` | Open-Elevation API URL |
 | `GIS_DEFAULT_CRS` | `EPSG:4326` | Default CRS |
-| `GIS_TEMP_DIR` | `/tmp/gis-mcp` | Temporary directory |
+| `GIS_TEMP_DIR` | `/tmp/locusync` | Temporary directory |
 
 ## Response Format
 
@@ -216,19 +216,19 @@ pip install -e ".[dev]"
 pytest
 
 # Run with coverage
-pytest --cov=src/gis_mcp --cov-report=html
+pytest --cov=src/locusync --cov-report=html
 
 # Type checking
-mypy src/gis_mcp
+mypy src/locusync
 
 # Linting
-ruff check src/gis_mcp
+ruff check src/locusync
 ```
 
 ## Architecture
 
 ```
-src/gis_mcp/
+src/locusync/
 ├── server.py      # MCP server entry point
 ├── config.py      # Configuration management
 ├── utils.py       # Common utilities

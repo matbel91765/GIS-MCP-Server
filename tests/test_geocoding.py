@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from gis_mcp.config import Config, PeliasConfig
-from gis_mcp.tools.geocoding import batch_geocode, geocode_address, reverse_geocode_coords
+from locusync.config import Config, PeliasConfig
+from locusync.tools.geocoding import batch_geocode, geocode_address, reverse_geocode_coords
 
 
 def _create_pelias_config():
@@ -62,7 +62,7 @@ class TestGeocode:
             }
         }]
 
-        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await geocode_address("Paris")
@@ -77,7 +77,7 @@ class TestGeocode:
     @pytest.mark.asyncio
     async def test_geocode_no_results(self):
         """Test geocoding when no results found (mocked)."""
-        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
             mock.return_value = []
 
             result = await geocode_address("xyznonexistentplace123")
@@ -126,7 +126,7 @@ class TestReverseGeocode:
             }
         }
 
-        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await reverse_geocode_coords(48.8584, 2.2945)
@@ -143,7 +143,7 @@ class TestReverseGeocode:
             "error": "Unable to geocode"
         }
 
-        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await reverse_geocode_coords(0, 0)  # Middle of ocean
@@ -245,7 +245,7 @@ class TestBatchGeocode:
             }]
         ]
 
-        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
             mock.side_effect = mock_responses
 
             result = await batch_geocode(addresses)
@@ -296,7 +296,7 @@ class TestBatchGeocode:
             }]
         ]
 
-        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
             mock.side_effect = mock_responses
 
             result = await batch_geocode(addresses)
@@ -318,7 +318,7 @@ class TestBatchGeocode:
         """Test batch geocoding when all addresses fail (mocked)."""
         addresses = ["Invalid1", "Invalid2"]
 
-        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
             mock.return_value = []  # No results for any address
 
             result = await batch_geocode(addresses)
@@ -362,7 +362,7 @@ class TestPeliasGeocode:
             "address": {"city": "Paris", "country": "France"}
         }]
 
-        with patch("gis_mcp.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.geocoding._nominatim_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_nominatim_response
 
             result = await geocode_address("Paris", provider="pelias")
@@ -396,9 +396,9 @@ class TestPeliasGeocode:
             }]
         }
 
-        with patch("gis_mcp.tools.geocoding.get_config") as mock_config:
+        with patch("locusync.tools.geocoding.get_config") as mock_config:
             mock_config.return_value = _create_pelias_config()
-            with patch("gis_mcp.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
+            with patch("locusync.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
                 mock.return_value = mock_pelias_response
 
                 result = await geocode_address("Paris", provider="pelias")
@@ -419,9 +419,9 @@ class TestPeliasGeocode:
             "features": []
         }
 
-        with patch("gis_mcp.tools.geocoding.get_config") as mock_config:
+        with patch("locusync.tools.geocoding.get_config") as mock_config:
             mock_config.return_value = _create_pelias_config()
-            with patch("gis_mcp.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
+            with patch("locusync.tools.geocoding._pelias_geocode", new_callable=AsyncMock) as mock:
                 mock.return_value = mock_pelias_response
 
                 result = await geocode_address("nonexistent123", provider="pelias")
@@ -457,9 +457,9 @@ class TestPeliasGeocode:
             }]
         }
 
-        with patch("gis_mcp.tools.geocoding.get_config") as mock_config:
+        with patch("locusync.tools.geocoding.get_config") as mock_config:
             mock_config.return_value = _create_pelias_config()
-            with patch("gis_mcp.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
+            with patch("locusync.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
                 mock.return_value = mock_pelias_response
 
                 result = await reverse_geocode_coords(48.8584, 2.2945, provider="pelias")
@@ -478,9 +478,9 @@ class TestPeliasGeocode:
             "features": []
         }
 
-        with patch("gis_mcp.tools.geocoding.get_config") as mock_config:
+        with patch("locusync.tools.geocoding.get_config") as mock_config:
             mock_config.return_value = _create_pelias_config()
-            with patch("gis_mcp.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
+            with patch("locusync.tools.geocoding._pelias_reverse", new_callable=AsyncMock) as mock:
                 mock.return_value = mock_pelias_response
 
                 result = await reverse_geocode_coords(0, 0, provider="pelias")

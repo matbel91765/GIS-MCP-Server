@@ -1,13 +1,13 @@
-"""Spatial statistics tools for GIS MCP Server.
+"""Spatial statistics tools for LocuSync Server.
 
 These tools require the optional 'statistics' dependencies:
-    pip install gis-mcp-server[statistics]
+    pip install locusync-server[statistics]
 """
 
 import logging
 from typing import Any
 
-from gis_mcp.utils import make_error_response, make_success_response
+from locusync.utils import make_error_response, make_success_response
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def _check_pysal():
     """Check if PySAL is available."""
     if not PYSAL_AVAILABLE:
         return make_error_response(
-            "PySAL not installed. Install with: pip install gis-mcp-server[statistics]"
+            "PySAL not installed. Install with: pip install locusync-server[statistics]"
         )
     return None
 

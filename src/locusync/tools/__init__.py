@@ -1,10 +1,10 @@
 """GIS MCP Tools - Comprehensive geospatial operations."""
 
 # Elevation tools
-from gis_mcp.tools.elevation import get_elevation, get_elevation_profile
+from locusync.tools.elevation import get_elevation, get_elevation_profile
 
 # File I/O tools
-from gis_mcp.tools.files import (
+from locusync.tools.files import (
     clip_features,
     dissolve_features,
     merge_features,
@@ -15,10 +15,10 @@ from gis_mcp.tools.files import (
 )
 
 # Geocoding tools
-from gis_mcp.tools.geocoding import geocode_address, reverse_geocode_coords
+from locusync.tools.geocoding import geocode_address, reverse_geocode_coords
 
 # Geometry tools (Shapely + PyProj)
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     calculate_area,
     calculate_buffer,
     calculate_distance,
@@ -35,7 +35,7 @@ from gis_mcp.tools.geometry import (
 )
 
 # Raster tools
-from gis_mcp.tools.raster import (
+from locusync.tools.raster import (
     calculate_hillshade,
     calculate_ndvi,
     calculate_slope,
@@ -46,10 +46,10 @@ from gis_mcp.tools.raster import (
 )
 
 # Routing tools
-from gis_mcp.tools.routing import calculate_isochrone, calculate_route
+from locusync.tools.routing import calculate_isochrone, calculate_route
 
 # Spatial statistics tools
-from gis_mcp.tools.statistics import (
+from locusync.tools.statistics import (
     calculate_getis_ord,
     calculate_local_moran,
     calculate_moran_i,
@@ -57,7 +57,7 @@ from gis_mcp.tools.statistics import (
 )
 
 # Visualization tools
-from gis_mcp.tools.visualization import (
+from locusync.tools.visualization import (
     create_choropleth_map,
     create_static_map,
     create_web_map,

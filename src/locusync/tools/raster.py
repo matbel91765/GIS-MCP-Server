@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from gis_mcp.utils import make_error_response, make_success_response
+from locusync.utils import make_error_response, make_success_response
 
 logger = logging.getLogger(__name__)
 

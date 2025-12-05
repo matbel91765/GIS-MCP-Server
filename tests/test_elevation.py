@@ -6,7 +6,7 @@ Note: These tests mock the Open-Elevation API requests.
 import pytest
 from unittest.mock import AsyncMock, patch
 
-from gis_mcp.tools.elevation import get_elevation, get_elevation_profile
+from locusync.tools.elevation import get_elevation, get_elevation_profile
 
 
 class TestGetElevation:
@@ -41,7 +41,7 @@ class TestGetElevation:
             ]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await get_elevation(48.8566, 2.3522)
@@ -56,7 +56,7 @@ class TestGetElevation:
     @pytest.mark.asyncio
     async def test_get_elevation_no_results(self):
         """Test get_elevation when no results found (mocked)."""
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = {"results": []}
 
             result = await get_elevation(0, 0)
@@ -77,7 +77,7 @@ class TestGetElevation:
             ]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await get_elevation(0, 0)
@@ -98,7 +98,7 @@ class TestGetElevation:
             ]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await get_elevation(90, 180)
@@ -170,7 +170,7 @@ class TestGetElevationProfile:
             ]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             coords = [[2.3522, 48.8566], [2.3376, 48.8606], [2.2945, 48.8584]]
@@ -209,7 +209,7 @@ class TestGetElevationProfile:
             ]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             coords = [[2.3522, 48.8566], [2.3376, 48.8606], [2.2945, 48.8584]]
@@ -237,7 +237,7 @@ class TestGetElevationProfile:
             ]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             coords = [[2.3522, 48.8566], [2.3376, 48.8606]]
@@ -257,7 +257,7 @@ class TestGetElevationProfile:
             ]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             coords = [[2.3522, 48.8566], [2.3376, 48.8606]]
@@ -277,7 +277,7 @@ class TestValidation:
             "results": [{"latitude": -90, "longitude": 0, "elevation": 0}]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
             result = await get_elevation(-90, 0)
             assert result["success"] is True
@@ -289,7 +289,7 @@ class TestValidation:
             "results": [{"latitude": 90, "longitude": 0, "elevation": 0}]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
             result = await get_elevation(90, 0)
             assert result["success"] is True
@@ -301,7 +301,7 @@ class TestValidation:
             "results": [{"latitude": 0, "longitude": -180, "elevation": 0}]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
             result = await get_elevation(0, -180)
             assert result["success"] is True
@@ -313,7 +313,7 @@ class TestValidation:
             "results": [{"latitude": 0, "longitude": 180, "elevation": 0}]
         }
 
-        with patch("gis_mcp.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.elevation._open_elevation_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
             result = await get_elevation(0, 180)
             assert result["success"] is True

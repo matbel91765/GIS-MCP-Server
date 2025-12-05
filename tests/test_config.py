@@ -4,7 +4,7 @@ import os
 import pytest
 from unittest.mock import patch
 
-from gis_mcp.config import (
+from locusync.config import (
     Config,
     NominatimConfig,
     OSRMConfig,
@@ -21,7 +21,7 @@ class TestNominatimConfig:
         """Test default configuration values."""
         config = NominatimConfig()
         assert config.base_url == "https://nominatim.openstreetmap.org"
-        assert config.user_agent == "gis-mcp-server/1.0.0"
+        assert config.user_agent == "locusync-server/1.0.0"
         assert config.timeout == 10.0
         assert config.rate_limit_delay == 1.0
 
@@ -56,7 +56,7 @@ class TestConfig:
         config = Config()
         assert config.default_crs == "EPSG:4326"
         assert config.max_file_size_mb == 100
-        assert config.temp_dir == "/tmp/gis-mcp"
+        assert config.temp_dir == "/tmp/locusync"
         assert isinstance(config.nominatim, NominatimConfig)
         assert isinstance(config.osrm, OSRMConfig)
         assert isinstance(config.valhalla, ValhallaConfig)

@@ -1,4 +1,4 @@
-"""GIS MCP Server - Main entry point."""
+"""LocuSync Server - Main entry point."""
 
 import logging
 from typing import Annotated
@@ -6,104 +6,104 @@ from typing import Annotated
 from fastmcp import FastMCP
 from pydantic import Field
 
-from gis_mcp.config import get_config
+from locusync.config import get_config
 
 # Import all tool implementations
-from gis_mcp.tools.elevation import get_elevation, get_elevation_profile
-from gis_mcp.tools.files import (
+from locusync.tools.elevation import get_elevation, get_elevation_profile
+from locusync.tools.files import (
     clip_features as _clip_features,
 )
-from gis_mcp.tools.files import (
+from locusync.tools.files import (
     dissolve_features as _dissolve_features,
 )
-from gis_mcp.tools.files import (
+from locusync.tools.files import (
     merge_features as _merge_features,
 )
-from gis_mcp.tools.files import (
+from locusync.tools.files import (
     overlay_features as _overlay_features,
 )
-from gis_mcp.tools.files import (
+from locusync.tools.files import (
     read_geo_file,
     write_geo_file,
 )
-from gis_mcp.tools.files import (
+from locusync.tools.files import (
     spatial_join as _spatial_join,
 )
-from gis_mcp.tools.geocoding import geocode_address, reverse_geocode_coords
-from gis_mcp.tools.geometry import (
+from locusync.tools.geocoding import geocode_address, reverse_geocode_coords
+from locusync.tools.geometry import (
     calculate_area as _calculate_area,
 )
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     calculate_buffer,
     calculate_distance,
     perform_spatial_query,
     transform_coordinates,
 )
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     calculate_length as _calculate_length,
 )
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     get_centroid as _get_centroid,
 )
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     get_convex_hull as _get_convex_hull,
 )
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     get_crs_info as _get_crs_info,
 )
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     get_envelope as _get_envelope,
 )
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     get_utm_zone as _get_utm_zone,
 )
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     simplify_geometry as _simplify_geometry,
 )
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     validate_geometry as _validate_geometry,
 )
-from gis_mcp.tools.raster import (
+from locusync.tools.raster import (
     calculate_hillshade as _calculate_hillshade,
 )
-from gis_mcp.tools.raster import (
+from locusync.tools.raster import (
     calculate_ndvi as _calculate_ndvi,
 )
-from gis_mcp.tools.raster import (
+from locusync.tools.raster import (
     calculate_slope as _calculate_slope,
 )
-from gis_mcp.tools.raster import (
+from locusync.tools.raster import (
     raster_calculator as _raster_calculator,
 )
-from gis_mcp.tools.raster import (
+from locusync.tools.raster import (
     read_raster as _read_raster,
 )
-from gis_mcp.tools.raster import (
+from locusync.tools.raster import (
     reproject_raster as _reproject_raster,
 )
-from gis_mcp.tools.raster import (
+from locusync.tools.raster import (
     zonal_statistics as _zonal_statistics,
 )
-from gis_mcp.tools.routing import calculate_isochrone, calculate_route
-from gis_mcp.tools.statistics import (
+from locusync.tools.routing import calculate_isochrone, calculate_route
+from locusync.tools.statistics import (
     calculate_getis_ord as _calculate_getis_ord,
 )
-from gis_mcp.tools.statistics import (
+from locusync.tools.statistics import (
     calculate_local_moran as _calculate_local_moran,
 )
-from gis_mcp.tools.statistics import (
+from locusync.tools.statistics import (
     calculate_moran_i as _calculate_moran_i,
 )
-from gis_mcp.tools.statistics import (
+from locusync.tools.statistics import (
     create_spatial_weights as _create_spatial_weights,
 )
-from gis_mcp.tools.visualization import (
+from locusync.tools.visualization import (
     create_choropleth_map as _create_choropleth_map,
 )
-from gis_mcp.tools.visualization import (
+from locusync.tools.visualization import (
     create_static_map as _create_static_map,
 )
-from gis_mcp.tools.visualization import (
+from locusync.tools.visualization import (
     create_web_map as _create_web_map,
 )
 
@@ -115,7 +115,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Initialize FastMCP server
-mcp = FastMCP("GIS Server")
+mcp = FastMCP("LocuSync Server")
 
 
 # =============================================================================
@@ -550,7 +550,7 @@ async def spatial_weights(
 
 def main():
     """Run the MCP server."""
-    logger.info("Starting GIS MCP Server...")
+    logger.info("Starting LocuSync Server...")
     config = get_config()
     logger.info(f"Nominatim URL: {config.nominatim.base_url}")
     logger.info(f"OSRM URL: {config.osrm.base_url}")

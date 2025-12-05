@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "gis-mcp-server"
+name = "locusync-server"
 version = "1.2.0"
 description = "MCP Server for geospatial operations - geocoding, routing, spatial analysis"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
-    { name = "GIS MCP Team" }
+    { name = "LocuSync Team" }
 ]
 keywords = [
     "mcp",
@@ -69,21 +69,21 @@ dev = [
 ]
 
 [project.scripts]
-gis-mcp-server = "gis_mcp.server:main"
+locusync-server = "locusync.server:main"
 
 [project.urls]
-Homepage = "https://github.com/matbel91765/gis-mcp-server"
-Documentation = "https://github.com/matbel91765/gis-mcp-server#readme"
-Repository = "https://github.com/matbel91765/gis-mcp-server"
-Issues = "https://github.com/matbel91765/gis-mcp-server/issues"
+Homepage = "https://github.com/matbel91765/locusync-server"
+Documentation = "https://github.com/matbel91765/locusync-server#readme"
+Repository = "https://github.com/matbel91765/locusync-server"
+Issues = "https://github.com/matbel91765/locusync-server/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/gis_mcp"]
+packages = ["src/locusync"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = "-v --cov=src/gis_mcp --cov-report=term-missing"
+addopts = "-v --cov=src/locusync --cov-report=term-missing"
 
 [tool.ruff]
 line-length = 100

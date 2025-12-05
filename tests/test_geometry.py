@@ -1,7 +1,7 @@
 """Tests for geometry tools."""
 
 import pytest
-from gis_mcp.tools.geometry import (
+from locusync.tools.geometry import (
     calculate_buffer,
     calculate_distance,
     perform_spatial_query,

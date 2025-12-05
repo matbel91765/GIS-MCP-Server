@@ -1,7 +1,7 @@
 """Tests for utility functions."""
 
 import pytest
-from gis_mcp.utils import (
+from locusync.utils import (
     format_distance,
     format_duration,
     make_error_response,

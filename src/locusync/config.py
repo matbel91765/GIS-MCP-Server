@@ -1,4 +1,4 @@
-"""Configuration management for GIS MCP Server."""
+"""Configuration management for LocuSync Server."""
 
 import os
 from dataclasses import dataclass, field
@@ -9,7 +9,7 @@ class NominatimConfig:
     """Configuration for Nominatim geocoding service."""
 
     base_url: str = "https://nominatim.openstreetmap.org"
-    user_agent: str = "gis-mcp-server/1.0.0"
+    user_agent: str = "locusync-server/1.0.0"
     timeout: float = 10.0
     rate_limit_delay: float = 1.0  # Nominatim requires 1 req/sec max
 
@@ -51,7 +51,7 @@ class OpenElevationConfig:
 
 @dataclass
 class Config:
-    """Main configuration for GIS MCP Server."""
+    """Main configuration for LocuSync Server."""
 
     nominatim: NominatimConfig = field(default_factory=NominatimConfig)
     osrm: OSRMConfig = field(default_factory=OSRMConfig)
@@ -62,7 +62,7 @@ class Config:
     # General settings
     default_crs: str = "EPSG:4326"  # WGS84
     max_file_size_mb: int = 100
-    temp_dir: str = "/tmp/gis-mcp"
+    temp_dir: str = "/tmp/locusync"
 
     @classmethod
     def from_env(cls) -> "Config":

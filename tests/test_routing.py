@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
-from gis_mcp.tools.routing import (
+from locusync.tools.routing import (
     calculate_route,
     calculate_isochrone,
     _normalize_profile,
@@ -161,7 +161,7 @@ class TestCalculateRoute:
             }]
         }
 
-        with patch("gis_mcp.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await calculate_route(
@@ -187,7 +187,7 @@ class TestCalculateRoute:
             "routes": []
         }
 
-        with patch("gis_mcp.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await calculate_route(
@@ -208,7 +208,7 @@ class TestCalculateRoute:
             "message": "No route found"
         }
 
-        with patch("gis_mcp.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await calculate_route(
@@ -225,7 +225,7 @@ class TestCalculateRoute:
         """Test network error handling."""
         import aiohttp
 
-        with patch("gis_mcp.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
             mock.side_effect = aiohttp.ClientError("Connection failed")
 
             result = await calculate_route(
@@ -299,7 +299,7 @@ class TestCalculateIsochrone:
             "durations": durations
         }
 
-        with patch("gis_mcp.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await calculate_isochrone(
@@ -325,7 +325,7 @@ class TestCalculateIsochrone:
             "durations": durations
         }
 
-        with patch("gis_mcp.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await calculate_isochrone(
@@ -346,7 +346,7 @@ class TestCalculateIsochrone:
             "message": "Invalid coordinates"
         }
 
-        with patch("gis_mcp.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
             mock.return_value = mock_response
 
             result = await calculate_isochrone(
@@ -362,7 +362,7 @@ class TestCalculateIsochrone:
         """Test network error handling."""
         import aiohttp
 
-        with patch("gis_mcp.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
+        with patch("locusync.tools.routing._osrm_request", new_callable=AsyncMock) as mock:
             mock.side_effect = aiohttp.ClientError("Connection failed")
 
             result = await calculate_isochrone(

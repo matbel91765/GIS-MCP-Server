@@ -8,7 +8,7 @@ from pyproj import CRS, Transformer
 from shapely.geometry import mapping, shape
 from shapely.ops import transform
 
-from gis_mcp.utils import (
+from locusync.utils import (
     format_distance,
     make_error_response,
     make_success_response,

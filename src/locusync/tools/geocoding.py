@@ -5,8 +5,8 @@ from typing import Any
 
 import aiohttp
 
-from gis_mcp.config import get_config
-from gis_mcp.utils import (
+from locusync.config import get_config
+from locusync.utils import (
     get_nominatim_limiter,
     make_error_response,
     make_success_response,

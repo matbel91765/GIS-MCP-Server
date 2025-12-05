@@ -1,6 +1,6 @@
-# GIS MCP Server - Tools Documentation
+# LocuSync Server - Tools Documentation
 
-This document provides detailed documentation for all tools available in the GIS MCP Server.
+This document provides detailed documentation for all tools available in the LocuSync Server.
 
 ## Table of Contents
 

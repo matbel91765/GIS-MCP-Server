@@ -6,8 +6,8 @@ from typing import Any
 
 import aiohttp
 
-from gis_mcp.config import get_config
-from gis_mcp.utils import (
+from locusync.config import get_config
+from locusync.utils import (
     format_distance,
     format_duration,
     make_error_response,

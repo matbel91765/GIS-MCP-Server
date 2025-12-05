@@ -32,12 +32,12 @@ jobs:
 
       - name: Type check with mypy
         run: |
-          mypy src/gis_mcp --ignore-missing-imports
+          mypy src/locusync --ignore-missing-imports
         continue-on-error: true
 
       - name: Run tests
         run: |
-          pytest tests/ -v --cov=src/gis_mcp --cov-report=xml
+          pytest tests/ -v --cov=src/locusync --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
