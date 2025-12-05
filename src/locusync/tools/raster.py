@@ -99,7 +99,9 @@ async def read_raster(
         return make_error_response(f"Failed to read raster: {str(e)}")
 
 
-def _compute_band_stats(data: np.ndarray[Any, Any], nodata: float | None, band_num: int) -> dict[str, Any]:
+def _compute_band_stats(
+    data: np.ndarray[Any, Any], nodata: float | None, band_num: int
+) -> dict[str, Any]:
     """Compute statistics for a raster band."""
     # Mask nodata values
     valid_data = data[data != nodata] if nodata is not None else data.flatten()

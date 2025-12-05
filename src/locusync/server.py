@@ -314,11 +314,7 @@ async def elevation_profile(
     samples: Annotated[int, Field(description="Number of sample points")] = 100
 ) -> dict[str, Any]:
     """Get elevation profile along a line."""
-    # Extract coordinates from geometry
-    if "coordinates" in geometry:
-        coordinates = geometry["coordinates"]
-    else:
-        coordinates = []
+    coordinates = geometry.get("coordinates", [])
     return await get_elevation_profile(coordinates)
 
 
@@ -392,7 +388,9 @@ async def overlay(
 
 @mcp.tool()
 async def merge(
-    feature_collections: Annotated[list[dict[str, Any]], Field(description="GeoJSON FeatureCollections")]
+    feature_collections: Annotated[
+        list[dict[str, Any]], Field(description="GeoJSON FeatureCollections")
+    ]
 ) -> dict[str, Any]:
     """Merge multiple feature collections into one."""
     return await _merge_features(feature_collections)
